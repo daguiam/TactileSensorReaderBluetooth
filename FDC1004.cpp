@@ -39,6 +39,31 @@ uint16_t cdc_read_register(uint8_t addr, uint8_t pointer, uint8_t verbose){
 
 
 
+
+char cdc_write_register(uint8_t addr, uint8_t addr_x, uint16_t data){
+  
+  union Package{
+    uint16_t data;
+    char bytes[3];
+  };
+
+  char status = 0xaa;
+  union Package package;
+  package.data = data;
+
+
+  Wire.beginTransmission(addr);
+  Wire.write(package.bytes[1]);
+  Wire.write(package.bytes[0]); 
+  status = Wire.endTransmission(); 
+  return status;
+}
+
+
+
+
+
+
 bool cdc_test_id(uint8_t addr){
   // Reads the Manufacturrer ID and Device ID of a FDC1004 device on the i2c bus
   uint16_t manufacturer_id = cdc_read_register(addr, CDC_MANUFACTURER_ID);

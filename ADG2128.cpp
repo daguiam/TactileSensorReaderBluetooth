@@ -24,11 +24,11 @@ char mux_get_addr_y(char y){
   return y;
 }
 
-
-
-void write_text(char * text){
-  Serial.write(text);
-}
+//
+//
+//void write_text(char * text){
+//  Serial.write(text);
+//}
 
 
 
@@ -55,11 +55,11 @@ void write_text(char * text){
 char mux_write_switch_config(uint8_t addr, uint8_t addr_x, uint8_t addr_y, uint8_t data, uint8_t ldsw){
   // For arduino, bitfield order must be reversed
   struct Package{
+    uint8_t ldsw : 1;
+    uint8_t undefined : 7;
     uint8_t addr_y : 3;
     uint8_t addr_x : 4;
     uint8_t data : 1;
-    uint8_t ldsw : 1;
-    uint8_t undefined : 7;
 
   };
 
@@ -73,8 +73,8 @@ char mux_write_switch_config(uint8_t addr, uint8_t addr_x, uint8_t addr_y, uint8
   package.ldsw = ldsw;
 
   Wire.beginTransmission(addr);
-  Wire.write(package_char[0]);
-  Wire.write(package_char[1]); 
+  Wire.write(package_char[1]);
+  Wire.write(package_char[0]); 
   status = Wire.endTransmission(); 
   return status;
 }
