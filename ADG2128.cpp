@@ -26,6 +26,10 @@ char mux_get_addr_y(char y){
 
 
 
+void write_text(char * text){
+  Serial.write(text);
+}
+
 
 
 
@@ -68,14 +72,6 @@ char mux_write_switch_config(uint8_t addr, uint8_t addr_x, uint8_t addr_y, uint8
   package.data = data;
   package.ldsw = ldsw;
 
-//  
-//  Serial.print("package:  ");
-//  Serial.print(package_char[0], HEX);
-//  Serial.print(" ");
-//  Serial.print(package_char[1], HEX);
-//  Serial.print("\n");
-//  
-  
   Wire.beginTransmission(addr);
   Wire.write(package_char[0]);
   Wire.write(package_char[1]); 

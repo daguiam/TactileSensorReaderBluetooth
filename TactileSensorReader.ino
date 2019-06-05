@@ -13,6 +13,9 @@
 #define led2 17
 
 
+#define I2C_ADDR_MUX1 0b01110001
+#define I2C_ADDR_MUX2 0b01110011
+#define I2C_ADDR_CDC  0b01010000
 
 
 void write_text(char * text){
@@ -56,6 +59,11 @@ void setup() {
   Serial.print("MUX2\n");
   mux_read_config_matrix(I2C_ADDR_MUX2);
 
+  // Checking connectivity and operation of FDC1004
+  if (!cdc_test_id(I2C_ADDR_CDC)){
+    Serial.print("CDC not working properly \n");
+  }
+
 
 
   
@@ -68,6 +76,7 @@ void loop() {
   char rb_addr = 0;
   char rb_addr_array[] = MUX_READ_X_ARRAY;
   char status = 0;
+  uint16_t aux = 0;
   
   digitalWrite(led,HIGH);
   digitalWrite(led2,HIGH);
@@ -83,7 +92,11 @@ void loop() {
   write_text("text\n");
 
 
-  char switch_info[8] = {1,0,1,0,1,0,1,1};
+  aux = cdc_read_register(I2C_ADDR_CDC, CDC_MANUFACTURER_ID);
+  Serial.println("FDC exists?");
+
+  Serial.println(cdc_test_id(I2C_ADDR_CDC));
+
 
 
   
