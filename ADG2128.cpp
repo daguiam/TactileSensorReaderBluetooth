@@ -24,32 +24,9 @@ char mux_get_addr_y(char y){
   return y;
 }
 
-//
-//
-//void write_text(char * text){
-//  Serial.write(text);
-//}
 
 
 
-
-
-//int mux_write(uint8_t addr, uint8_t rw, uint8_t data, uint8_t addr_x, uint8_t addr_y, uint8_t ldsw){
-//  
-//  struct MUX_Struct payload;
-//
-//  payload.addr = addr;
-//  payload.rw = rw;
-//  payload.data = data;
-//  payload.addr_x = addr_x;
-//  payload.addr_y = addr_y;
-//  payload.ldsw = ldsw;
-//
-//  Wire.write((unsigned char*)&payload, MUX_PACKAGE_LENGTH);
-//  
-//  return 1;
-//
-//}
 
 
 char mux_write_switch_config(uint8_t addr, uint8_t addr_x, uint8_t addr_y, uint8_t data, uint8_t ldsw){
@@ -178,7 +155,8 @@ bool mux_read_config_matrix(uint8_t addr){
   char rb_addr_array[] = MUX_READ_X_ARRAY;
   char status = 0;
 
-  Serial.print("\tY7\tY6\tY5\tY4\tY3\tY2\tY1\tY0\n");
+//  Serial.print("\tY7\tY6\tY5\tY4\tY3\tY2\tY1\tY0\n");
+  Serial.print("\tY0\tY1\tY2\tY3\tY4\tY5\tY6\tY7\n");
   for (j=0; j<12; j++){
 
 
@@ -193,4 +171,13 @@ bool mux_read_config_matrix(uint8_t addr){
     Serial.print("\n");
   }
   return 1;
+}
+
+
+
+char mux_reset(){
+  
+  digitalWrite(IO_MUX_RESET_N,LOW);
+  delay(10);
+  digitalWrite(IO_MUX_RESET_N,HIGH);
 }

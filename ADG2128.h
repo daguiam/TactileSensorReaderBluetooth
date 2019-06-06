@@ -27,7 +27,7 @@
 #define MUX_READ_X_ARRAY {MUX_READ_X0, MUX_READ_X1, MUX_READ_X2, MUX_READ_X3, MUX_READ_X4, MUX_READ_X5, MUX_READ_X6, MUX_READ_X7, MUX_READ_X8, MUX_READ_X9, MUX_READ_X10, MUX_READ_X11}
 
 
-
+char mux_reset();
 char mux_get_addr_x(char x);
 char mux_get_addr_y(char y);
 
