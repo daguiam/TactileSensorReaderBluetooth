@@ -11,7 +11,7 @@
 
 
 
-char mux_get_addr_x(char x){
+char mux_get_addr_x(uint8_t x){
   // ADG2128 has reserved codes for addressing the X lines... check datasheet page 21
   if (x<6){
     return x;
@@ -20,7 +20,7 @@ char mux_get_addr_x(char x){
   }
 }
 
-char mux_get_addr_y(char y){
+char mux_get_addr_y(uint8_t y){
   return y;
 }
 
@@ -173,6 +173,29 @@ bool mux_read_config_matrix(uint8_t addr){
   return 1;
 }
 
+
+uint8_t mux_read_x_connections(uint8_t addr, uint8_t x){
+  
+  char rb_addr_array[] = MUX_READ_X_ARRAY;
+  return mux_read_config(addr, rb_addr_array[x]);
+  
+}
+
+
+char mux_clear_x(uint8_t addr, uint8_t x ){
+  int i = 0;
+  for (i=0; i<MUX_READ_Y_ARRAY_LEN; i++){
+    mux_write_switch_config(addr, mux_get_addr_x(x), mux_get_addr_y(i), MUX_SWITCH_OFF, MUX_LDSW_LOAD );
+  }
+}
+
+
+char mux_clear_all(uint8_t addr){
+  int j = 0;
+  for (j=0; j<MUX_READ_X_ARRAY_LEN; j++){
+   mux_clear_x(addr, j);
+  }
+}
 
 
 char mux_reset(){

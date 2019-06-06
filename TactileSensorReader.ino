@@ -7,15 +7,11 @@
 #include <Wire.h>
 #include "ADG2128.h"
 #include "FDC1004.h"
+#include "CapArray.h"
 
 
 #define led 13
 #define led2 17
-
-
-#define I2C_ADDR_MUX1 0b01110001
-#define I2C_ADDR_MUX2 0b01110011
-#define I2C_ADDR_CDC  0b01010000
 
 
 void write_text(char * text){
@@ -91,6 +87,10 @@ void setup() {
   cdc_get_measurement_configuration(I2C_ADDR_CDC, CDC_MEAS2, 1);
   cdc_get_measurement_configuration(I2C_ADDR_CDC, CDC_MEAS3, 1);
   cdc_get_measurement_configuration(I2C_ADDR_CDC, CDC_MEAS4, 1);
+
+
+
+  cap_switch_all_rows_signal(CAP_ROW_SHLD1);
   
 }
 int capdac_value = 0;
@@ -101,6 +101,11 @@ void loop() {
   char addr = 0;
   char rb_addr = 0;
   char rb_addr_array[] = MUX_READ_X_ARRAY;
+
+  uint8_t row_array[] = CAP_ROW_ARRAY;
+  uint8_t column_array[] = CAP_COLUMN_ARRAY;
+
+  
   char status = 0;
   uint16_t aux = 0;
   int measurement = 0;
@@ -145,6 +150,48 @@ void loop() {
 
   capdac_value = (capdac_value+1)%12;
   capdac_value = 4;
+
+
+
+  Serial.println("Clearing cap rows and columns");
+  cap_switch_clear_all_rows();
+  cap_switch_clear_all_columns();
+//  Serial.println("MUX1");
+//  mux_read_config_matrix(I2C_ADDR_MUX1);
+//  Serial.println("MUX2");
+//  mux_read_config_matrix(I2C_ADDR_MUX2);
+//
+//
+
+  Serial.println("Setting all rows and columns to shield");
+  cap_switch_all_rows_signal(CAP_ROW_SHLD1);
+  cap_switch_all_columns_signal(CAP_COL_SHLD1);
+  Serial.println("Settings row R01 to CIN1 and columns to GND");
+  cap_switch_row_signal(CAP_R01, CAP_ROW_CIN1);
+  cap_switch_column_signal(CAP_C01, CAP_COL_GND);
+
+  
+  digitalWrite(led,HIGH);
+  for (j=0; j<CAP_COLUMN_ARRAY_LEN; j++){
+    for (i=0; i<CAP_ROW_ARRAY_LEN; i++){
+      cap_set_sensor_measurement_single(i, j);
+    }
+  }
+  digitalWrite(led,LOW);
+  
+
+
+  cap_set_sensor_measurement_single(5,5);
+  cap_print_connections();
+
+  Serial.println("|||");
+  Serial.println("-+-");
+  Serial.println("|||");
+
+
+
+
+
 
 
 }

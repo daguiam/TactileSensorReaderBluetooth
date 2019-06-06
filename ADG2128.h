@@ -25,11 +25,16 @@
 #define MUX_READ_X10 0b01110110
 #define MUX_READ_X11 0b01111110
 #define MUX_READ_X_ARRAY {MUX_READ_X0, MUX_READ_X1, MUX_READ_X2, MUX_READ_X3, MUX_READ_X4, MUX_READ_X5, MUX_READ_X6, MUX_READ_X7, MUX_READ_X8, MUX_READ_X9, MUX_READ_X10, MUX_READ_X11}
-
+#define MUX_READ_X_ARRAY_LEN 12
+#define MUX_READ_Y_ARRAY_LEN 8
 
 char mux_reset();
-char mux_get_addr_x(char x);
-char mux_get_addr_y(char y);
+char mux_get_addr_x(uint8_t x);
+char mux_get_addr_y(uint8_t y);
+
+char mux_clear_x(uint8_t addr, uint8_t x );
+char mux_clear_all(uint8_t addr);
+
 
 char mux_read_config(uint8_t addr, uint8_t read_addr_X, uint8_t verbose=0);
 char mux_write_switch_config(uint8_t addr, uint8_t addr_x, uint8_t addr_y, uint8_t data, uint8_t ldsw);
@@ -37,3 +42,5 @@ char mux_write_switch_config(uint8_t addr, uint8_t addr_x, uint8_t addr_y, uint8
 
 bool mux_read_config_matrix(uint8_t addr);
 bool mux_test_operation(uint8_t addr, bool verbose=0);
+
+uint8_t mux_read_x_connections(uint8_t addr, uint8_t x);
