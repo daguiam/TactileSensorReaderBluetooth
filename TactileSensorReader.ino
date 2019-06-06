@@ -79,6 +79,7 @@ void setup() {
 
   cdc_set_measurement_configuration(I2C_ADDR_CDC, CDC_MEASUREMENT, CDC_CHANNEL_CIN1, CDC_CHANNEL_CAPDAC, 0);
   cdc_set_repeat_measurements(I2C_ADDR_CDC, CDC_ENABLE);
+  cdc_set_repeat_measurements(I2C_ADDR_CDC, CDC_DISABLE);
   cdc_set_measurement_enable(I2C_ADDR_CDC, CDC_MEASUREMENT, CDC_ENABLE);
 
   
@@ -111,6 +112,7 @@ void loop() {
   int measurement = 0;
   int value = 0;
   float capacitance = 0;
+  int capdac = 3;
 
   
   digitalWrite(led,HIGH);
@@ -130,26 +132,26 @@ void loop() {
 //CDC_CHANNEL_DISABLED
 //CDC_CHANNEL_CAPDAC
 
-
-  cdc_set_measurement_configuration(I2C_ADDR_CDC, CDC_MEASUREMENT, CDC_CHANNEL_CIN1, CDC_CHANNEL_CAPDAC, capdac_value);
-
-  // Wait for complete measurement
-  while(!cdc_get_measurement_completed(I2C_ADDR_CDC,CDC_MEASUREMENT));
-  value = cdc_get_measurement(I2C_ADDR_CDC, CDC_MEASUREMENT);
-  capacitance = cdc_convert_capacitance(value, capdac_value);
-
-  // Check for saturation of capacitance
-
-    
-  if (!cdc_measurement_saturated(value)){
-    Serial.print("Measurement ");Serial.print(CDC_MEASUREMENT); Serial.print(" CAP ");Serial.print(capdac_value);
-    Serial.print(" : ");Serial.print(value);Serial.print("   \t= ");Serial.print(capacitance,4);Serial.println(" pF");
-  }else{
-    Serial.print("Measurement ");Serial.print(CDC_MEASUREMENT); Serial.print(" CAP Saturated");Serial.print(capdac_value); Serial.println(" Saturated ");
-  }
-
-  capdac_value = (capdac_value+1)%12;
-  capdac_value = 4;
+//
+//  cdc_set_measurement_configuration(I2C_ADDR_CDC, CDC_MEASUREMENT, CDC_CHANNEL_CIN1, CDC_CHANNEL_CAPDAC, capdac_value);
+//
+//  // Wait for complete measurement
+//  while(!cdc_get_measurement_completed(I2C_ADDR_CDC,CDC_MEASUREMENT));
+//  value = cdc_get_measurement(I2C_ADDR_CDC, CDC_MEASUREMENT);
+//  capacitance = cdc_convert_capacitance(value, capdac_value);
+//
+//  // Check for saturation of capacitance
+//
+//    
+//  if (!cdc_measurement_saturated(value)){
+//    Serial.print("Measurement ");Serial.print(CDC_MEASUREMENT); Serial.print(" CAP ");Serial.print(capdac_value);
+//    Serial.print(" : ");Serial.print(value);Serial.print("   \t= ");Serial.print(capacitance,4);Serial.println(" pF");
+//  }else{
+//    Serial.print("Measurement ");Serial.print(CDC_MEASUREMENT); Serial.print(" CAP Saturated");Serial.print(capdac_value); Serial.println(" Saturated ");
+//  }
+//
+//  capdac_value = (capdac_value+1)%12;
+//  capdac_value = 4;
 
 
 
@@ -172,17 +174,25 @@ void loop() {
 
   
   digitalWrite(led,HIGH);
+  capdac = 10;
+  cdc_set_measurement_configuration(I2C_ADDR_CDC, CDC_MEAS1, CDC_CHANNEL_CIN1, CDC_CHANNEL_CAPDAC, capdac);
+
   for (j=0; j<CAP_COLUMN_ARRAY_LEN; j++){
     for (i=0; i<CAP_ROW_ARRAY_LEN; i++){
-      cap_set_sensor_measurement_single(i, j);
+//      cap_set_sensor_measurement_single(i, j);
+      digitalWrite(led2,HIGH);
+      capacitance = cap_get_measurement_single(i, j, capdac);
+      digitalWrite(led2,LOW);
+      Serial.print("C_");Serial.print(i); Serial.print("_");Serial.print(j);
+       Serial.print("   \t:\t");Serial.print(capacitance,4);Serial.println(" pF");
     }
   }
   digitalWrite(led,LOW);
   
-
-
-  cap_set_sensor_measurement_single(5,5);
-  cap_print_connections();
+//
+//
+//  cap_set_sensor_measurement_single(5,5);
+//  cap_print_connections();
 
   Serial.println("|||");
   Serial.println("-+-");

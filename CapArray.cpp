@@ -124,3 +124,25 @@ int cap_set_sensor_measurement_single(uint8_t position_row, uint8_t position_col
   // Sets the capacitive sensor column to GND
   cap_switch_column_signal(column_array[position_column], CAP_COL_GND);
 }
+
+
+
+float cap_get_measurement_single(uint8_t position_row, uint8_t position_column, uint8_t capdac){
+  uint32_t value;
+  float capacitance;
+  // Setting the capacitor configuration
+  cap_set_sensor_measurement_single(position_row, position_column);
+
+  // Setting the measurement configuration
+//  cdc_set_measurement_configuration(I2C_ADDR_CDC, CDC_MEAS1, CDC_CHANNEL_CIN1, CDC_CHANNEL_CAPDAC, capdac);
+  cdc_set_measurement_enable(I2C_ADDR_CDC, CDC_MEAS1, CDC_ENABLE);
+
+  // Wait for complete measurement
+  while(!cdc_get_measurement_completed(I2C_ADDR_CDC,CDC_MEAS1));
+  // reading value
+  value = cdc_get_measurement(I2C_ADDR_CDC, CDC_MEAS1);
+  // Converting value to capacitance
+  capacitance = cdc_convert_capacitance(value, capdac);
+  
+  return capacitance;
+}

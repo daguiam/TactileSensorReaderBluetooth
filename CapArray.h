@@ -77,3 +77,4 @@ int cap_print_column_connections(uint8_t column);
 int cap_print_connections();
 
 int cap_set_sensor_measurement_single(uint8_t position_row, uint8_t position_column);
+float cap_get_measurement_single(uint8_t position_row, uint8_t position_column, uint8_t capdac);
