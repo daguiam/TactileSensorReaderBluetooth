@@ -8,11 +8,25 @@
 #include "ADG2128.h"
 #include "FDC1004.h"
 #include "CapArray.h"
-
+#include "MemStorage.h"
 
 #define led 13
 #define led2 17
 
+
+int capdac_value = 0;
+char mem_sensors[CAP_ROW_ARRAY_LEN][CAP_COLUMN_ARRAY_LEN];
+
+float mem_sensors_values[CAP_ROW_ARRAY_LEN][CAP_COLUMN_ARRAY_LEN];
+//float mem_sensors_values_2[CAP_ROW_ARRAY_LEN][CAP_COLUMN_ARRAY_LEN];
+//
+////float ** mem_sensors_values = mem_sensors_values_1;
+//int mem_capdac[CAP_ROW_ARRAY_LEN][CAP_COLUMN_ARRAY_LEN];
+//int mem_offset_calibration[CAP_ROW_ARRAY_LEN][CAP_COLUMN_ARRAY_LEN];
+
+//
+//float ** mem_sensors_values_1;
+//float ** mem_sensors_values;
 
 void write_text(char * text){
   Serial.write(text);
@@ -21,15 +35,19 @@ void write_text(char * text){
   
 void setup() {
 
-
-
   // Serial for debugging connection
-  Serial.begin(9600);
+    Serial.begin(9600);
+//  Serial.begin(230400);
+
+  
   randomSeed(analogRead(0));
 
   
   // Initializing wire connection
   Wire.begin();
+  // set clock to 400 kHz
+  Wire.setClock(400000);
+
 
   // Initializing IO
   pinMode(led,OUTPUT);
@@ -61,9 +79,9 @@ void setup() {
 //  mux_read_config_matrix(I2C_ADDR_MUX1);
 
   // Printing switch info of MUX 1 and 2
-  Serial.print("MUX1\n");
+//  Serial.print("MUX1\n");
   mux_read_config_matrix(I2C_ADDR_MUX1);
-  Serial.print("MUX2\n");
+//  Serial.print("MUX2\n");
   mux_read_config_matrix(I2C_ADDR_MUX2);
 
 
@@ -80,25 +98,39 @@ void setup() {
   cdc_set_measurement_configuration(I2C_ADDR_CDC, CDC_MEASUREMENT, CDC_CHANNEL_CIN1, CDC_CHANNEL_CAPDAC, 0);
   cdc_set_repeat_measurements(I2C_ADDR_CDC, CDC_ENABLE);
   cdc_set_repeat_measurements(I2C_ADDR_CDC, CDC_DISABLE);
+
+  cdc_set_rate(I2C_ADDR_CDC, CDC_RATE_400SPS);
+  
   cdc_set_measurement_enable(I2C_ADDR_CDC, CDC_MEASUREMENT, CDC_ENABLE);
 
   
   // Reading configurations of all measurements
-  cdc_get_measurement_configuration(I2C_ADDR_CDC, CDC_MEAS1, 1);
-  cdc_get_measurement_configuration(I2C_ADDR_CDC, CDC_MEAS2, 1);
-  cdc_get_measurement_configuration(I2C_ADDR_CDC, CDC_MEAS3, 1);
-  cdc_get_measurement_configuration(I2C_ADDR_CDC, CDC_MEAS4, 1);
+  cdc_get_measurement_configuration(I2C_ADDR_CDC, CDC_MEAS1);
+  cdc_get_measurement_configuration(I2C_ADDR_CDC, CDC_MEAS2);
+  cdc_get_measurement_configuration(I2C_ADDR_CDC, CDC_MEAS3);
+  cdc_get_measurement_configuration(I2C_ADDR_CDC, CDC_MEAS4);
 
 
+  cdc_print_configuration(I2C_ADDR_CDC);
 
   cap_switch_all_rows_signal(CAP_ROW_SHLD1);
-  
+
+
+//
+//  
+//  // Initalize memory
+//  mem_sensors_values_1 = mem_init_float(CAP_ROW_ARRAY_LEN,CAP_COLUMN_ARRAY_LEN);
+//  mem_sensors_values = mem_sensors_values_1;
+
 }
-int capdac_value = 0;
+
+
+
 
 void loop() {
   int i = 0;
   int j = 0;
+  int row,column;
   char addr = 0;
   char rb_addr = 0;
   char rb_addr_array[] = MUX_READ_X_ARRAY;
@@ -174,33 +206,45 @@ void loop() {
 
   
   digitalWrite(led,HIGH);
-  capdac = 10;
+  capdac = 7;
   cdc_set_measurement_configuration(I2C_ADDR_CDC, CDC_MEAS1, CDC_CHANNEL_CIN1, CDC_CHANNEL_CAPDAC, capdac);
 
-  for (j=0; j<CAP_COLUMN_ARRAY_LEN; j++){
-    for (i=0; i<CAP_ROW_ARRAY_LEN; i++){
+
+
+
+  // fills the mem_sensors array with spaces
+  for (row=0; row<CAP_ROW_ARRAY_LEN; row++){
+    for (i=0; i<CAP_COLUMN_ARRAY_LEN; i++){
+      mem_sensors[j][i] = ' ';
+    }
+  }
+
+
+  for (row=0; row<CAP_ROW_ARRAY_LEN; row++){
+    for (column=0; column<CAP_COLUMN_ARRAY_LEN; column++){
 //      cap_set_sensor_measurement_single(i, j);
       digitalWrite(led2,HIGH);
-      capacitance = cap_get_measurement_single(i, j, capdac);
+      capacitance = cap_get_measurement_single(row, column, capdac);
       digitalWrite(led2,LOW);
-      Serial.print("C_");Serial.print(i); Serial.print("_");Serial.print(j);
-       Serial.print("   \t:\t");Serial.print(capacitance,4);Serial.println(" pF");
+//      Serial.print("C_");Serial.print(i); Serial.print("_");Serial.print(j);
+//       Serial.print("   \t:\t");Serial.print(capacitance,4);Serial.println(" pF");
+
+//      mem_store_float((float**)mem_sensors_values, row, column, capacitance);
+      
+//      Serial.print(mem_get_position_float(mem_sensors_values, row, column),4);
+      Serial.print(" ");
+
     }
+    Serial.println();
   }
   digitalWrite(led,LOW);
   
 //
 //
 //  cap_set_sensor_measurement_single(5,5);
-//  cap_print_connections();
+  cap_print_connections();
 
-  Serial.println("|||");
-  Serial.println("-+-");
-  Serial.println("|||");
-
-
-
-
+  
 
 
 

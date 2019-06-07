@@ -42,6 +42,13 @@
 //#define CDC_REPEAT_ENABLE 1
 //#define CDC_REPEAT_DISABLE 0
 
+#define CDC_RATE_RESERVED 0
+#define CDC_RATE_100SPS 1
+#define CDC_RATE_200SPS 2
+#define CDC_RATE_400SPS 3
+
+
+
 #define CDC_ENABLE 1
 #define CDC_DISABLE 0
 
@@ -57,6 +64,8 @@ char cdc_reset_device(uint8_t addr);
 char cdc_print_configuration(uint8_t addr);
 
 char cdc_set_repeat_measurements(uint8_t addr, uint8_t repeat);
+char cdc_set_rate(uint8_t addr, uint8_t rate);
+
 char cdc_set_measurement_enable(uint8_t addr, uint8_t channel, uint8_t enable);
 int cdc_get_measurement_completed(uint8_t addr, uint8_t channel);
 char cdc_set_measurement_configuration(uint8_t addr, uint8_t measurement, uint8_t input_cha, uint8_t input_chb, uint8_t capdac, uint8_t verbose=0);

@@ -156,6 +156,13 @@ char cdc_set_repeat_measurements(uint8_t addr, uint8_t repeat){
 }
 
 
+char cdc_set_rate(uint8_t addr, uint8_t rate){
+  union Package_FDC_CONF fdc_configuration = cdc_read_configuration(addr);
+  fdc_configuration.elements.rate = rate;
+  return cdc_write_register(addr, CDC_FDC_CONF, fdc_configuration.packet);
+}
+
+
 char cdc_set_measurement_enable(uint8_t addr, uint8_t measurement, uint8_t enable){
   union Package_FDC_CONF fdc_configuration = cdc_read_configuration(addr);
   switch(measurement){
