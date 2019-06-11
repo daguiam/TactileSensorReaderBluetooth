@@ -63,12 +63,12 @@
 
 
 
-int cap_switch_row_signal(uint8_t row, uint8_t signal);
+int cap_switch_row_signal(uint8_t row, uint8_t signal, uint8_t data=MUX_SWITCH_ON,  uint8_t clear=1);
 int cap_switch_all_rows_signal(uint8_t signal);
 int cap_switch_clear_row(uint8_t row);
 int cap_switch_clear_all_rows();
 
-int cap_switch_column_signal(uint8_t column, uint8_t signal);
+int cap_switch_column_signal(uint8_t column, uint8_t signal, uint8_t data=MUX_SWITCH_ON,  uint8_t clear=1);
 int cap_switch_all_columns_signal(uint8_t signal);
 int cap_switch_clear_column(uint8_t column);
 int cap_switch_clear_all_columns();
@@ -80,3 +80,18 @@ int cap_print_connections();
 
 int cap_set_sensor_measurement_single(uint8_t position_row, uint8_t position_column);
 float cap_get_measurement_single(uint8_t position_row, uint8_t position_column, uint8_t capdac);
+
+
+float * cap_get_measurement_iteration(float * mem_sensor_array,
+                                    int * mem_sensor_capdac_array, 
+                                    int * mem_sensor_offset_array,
+                                    uint8_t row_len, 
+                                    uint8_t col_len
+                                    );
+
+int cap_calibrate_sensors(float * mem_sensor_array,
+                              int * mem_sensor_capdac_array, 
+                              int * mem_sensor_offset_array,
+                              uint8_t row_len, 
+                              uint8_t col_len
+                              );

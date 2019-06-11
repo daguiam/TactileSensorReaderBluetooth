@@ -163,6 +163,17 @@ char cdc_set_rate(uint8_t addr, uint8_t rate){
 }
 
 
+char cdc_set_offset(uint8_t addr, uint8_t channel, int16_t offset){
+  uint8_t offset_addr_array[] = CDC_OFFSET_CAL_ARRAY;
+  uint8_t offset_addr = offset_addr_array[channel];
+//  Serial.print("Offset is ");Serial.println(offset, HEX);
+
+  return cdc_write_register(addr, offset_addr, offset);
+}
+
+
+
+
 char cdc_set_measurement_enable(uint8_t addr, uint8_t measurement, uint8_t enable){
   union Package_FDC_CONF fdc_configuration = cdc_read_configuration(addr);
   switch(measurement){
@@ -338,6 +349,14 @@ float cdc_convert_capacitance(int32_t value, int32_t capdac){
   float output = (float) value/134217728.0 + capdac*3.125;
   return output;
 }
+
+
+float cdc_convert_capacitance_normalized(int32_t value){
+  float output = (float) value/134217728.0 ;
+//  output = (float) value;
+  return output;
+}
+
 
 int cdc_measurement_saturated(int32_t value){
   if (value >= 2147483391 || value <= -2147483392){

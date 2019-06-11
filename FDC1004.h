@@ -17,6 +17,8 @@
 #define CDC_OFFSET_CAL_CIN2 0x0E  // 0x0000 // CIN2 Offset Calibration
 #define CDC_OFFSET_CAL_CIN3 0x0F  // 0x0000 // CIN3 Offset Calibration
 #define CDC_OFFSET_CAL_CIN4 0x10  // 0x0000 // CIN4 Offset Calibration
+#define CDC_OFFSET_CAL_ARRAY {CDC_OFFSET_CAL_CIN1, CDC_OFFSET_CAL_CIN2, CDC_OFFSET_CAL_CIN3, CDC_OFFSET_CAL_CIN4}
+
 #define CDC_GAIN_CAL_CIN1 0x11  // 0x4000 // CIN1 Gain Calibration
 #define CDC_GAIN_CAL_CIN2 0x12  // 0x4000 // CIN2 Gain Calibration
 #define CDC_GAIN_CAL_CIN3 0x13  // 0x4000 // CIN3 Gain Calibration
@@ -47,6 +49,9 @@
 #define CDC_RATE_200SPS 2
 #define CDC_RATE_400SPS 3
 
+#define CDC_CAPDAC_MAX 32
+#define CDC_CAPDAC_HALF_LSB 3.125/2
+#define CDC_OFFSET_MAX 32
 
 
 #define CDC_ENABLE 1
@@ -65,6 +70,8 @@ char cdc_print_configuration(uint8_t addr);
 
 char cdc_set_repeat_measurements(uint8_t addr, uint8_t repeat);
 char cdc_set_rate(uint8_t addr, uint8_t rate);
+char cdc_set_offset(uint8_t addr, uint8_t channel, int16_t offset);
+
 
 char cdc_set_measurement_enable(uint8_t addr, uint8_t channel, uint8_t enable);
 int cdc_get_measurement_completed(uint8_t addr, uint8_t channel);
@@ -73,4 +80,7 @@ uint16_t cdc_get_measurement_configuration(uint8_t addr, uint8_t measurement, ch
 
 int32_t cdc_get_measurement(uint8_t addr, uint8_t measurement);
 float cdc_convert_capacitance(int32_t value, int32_t capdac);
+float cdc_convert_capacitance_normalized(int32_t value);
+
+
 int cdc_measurement_saturated(int32_t value);
