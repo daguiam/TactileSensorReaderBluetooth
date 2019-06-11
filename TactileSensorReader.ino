@@ -15,29 +15,45 @@
 
 
 int capdac_value = 0;
-char mem_sensors[CAP_ROW_ARRAY_LEN][CAP_COLUMN_ARRAY_LEN];
 
-float mem_sensors_values[CAP_ROW_ARRAY_LEN][CAP_COLUMN_ARRAY_LEN];
-//float mem_sensors_values_2[CAP_ROW_ARRAY_LEN][CAP_COLUMN_ARRAY_LEN];
-//
-////float ** mem_sensors_values = mem_sensors_values_1;
-//int mem_capdac[CAP_ROW_ARRAY_LEN][CAP_COLUMN_ARRAY_LEN];
-//int mem_offset_calibration[CAP_ROW_ARRAY_LEN][CAP_COLUMN_ARRAY_LEN];
 
-//
-//float ** mem_sensors_values_1;
-//float ** mem_sensors_values;
+
+float * mem_sensor_array;
+int row_len = CAP_ROW_ARRAY_LEN;
+int col_len = CAP_COLUMN_ARRAY_LEN;
+
+
+TaskHandle_t Task2;
+
+
 
 void write_text(char * text){
   Serial.write(text);
 }
 
+
+
+//Task2code: blinks an LED every 700 ms
+void Task2code( void * pvParameters ){
+  Serial.print("Task2 running on core ");
+  Serial.println(xPortGetCoreID());
+
+  for(;;){
+    digitalWrite(led2, HIGH);
+    delay(700);
+    digitalWrite(led2, LOW);
+    delay(700);
+  }
+}
+
+
+
   
 void setup() {
 
   // Serial for debugging connection
-    Serial.begin(9600);
-//  Serial.begin(230400);
+//    Serial.begin(9600);
+  Serial.begin(230400);
 
   
   randomSeed(analogRead(0));
@@ -122,6 +138,20 @@ void setup() {
 //  mem_sensors_values_1 = mem_init_float(CAP_ROW_ARRAY_LEN,CAP_COLUMN_ARRAY_LEN);
 //  mem_sensors_values = mem_sensors_values_1;
 
+  mem_sensor_array = mem_init_float(row_len, col_len);
+
+
+
+  xTaskCreatePinnedToCore(
+                    Task2code,   /* Task function. */
+                    "Task2",     /* name of task. */
+                    10000,       /* Stack size of task */
+                    NULL,        /* parameter of the task */
+                    1,           /* priority of the task */
+                    &Task2,      /* Task handle to keep track of created task */
+                    1);          /* pin task to core 1 */
+
+
 }
 
 
@@ -130,7 +160,7 @@ void setup() {
 void loop() {
   int i = 0;
   int j = 0;
-  int row,column;
+  int row, col;
   char addr = 0;
   char rb_addr = 0;
   char rb_addr_array[] = MUX_READ_X_ARRAY;
@@ -212,32 +242,42 @@ void loop() {
 
 
 
-  // fills the mem_sensors array with spaces
-  for (row=0; row<CAP_ROW_ARRAY_LEN; row++){
-    for (i=0; i<CAP_COLUMN_ARRAY_LEN; i++){
-      mem_sensors[j][i] = ' ';
-    }
-  }
 
 
-  for (row=0; row<CAP_ROW_ARRAY_LEN; row++){
-    for (column=0; column<CAP_COLUMN_ARRAY_LEN; column++){
+
+  for (row=0; row<row_len; row++){
+    for (col=0; col<col_len; col++){
 //      cap_set_sensor_measurement_single(i, j);
-      digitalWrite(led2,HIGH);
-      capacitance = cap_get_measurement_single(row, column, capdac);
-      digitalWrite(led2,LOW);
+
+
+//      digitalWrite(led2,HIGH);
+      capacitance = cap_get_measurement_single(row, col, capdac);
+//      digitalWrite(led2,LOW);
+      
+
+
 //      Serial.print("C_");Serial.print(i); Serial.print("_");Serial.print(j);
 //       Serial.print("   \t:\t");Serial.print(capacitance,4);Serial.println(" pF");
 
-//      mem_store_float((float**)mem_sensors_values, row, column, capacitance);
-      
+        mem_store_float(mem_sensor_array, row, col, row_len, col_len, capacitance);
 //      Serial.print(mem_get_position_float(mem_sensors_values, row, column),4);
-      Serial.print(" ");
+//      Serial.print(" ");
 
+    }
+//    Serial.println();
+  }
+  digitalWrite(led,LOW);
+
+  for (row=0; row<row_len; row++){
+    for (col=0; col<col_len; col++){
+//      Serial.print(mem_sensors_values[row][column],2);
+      Serial.print(mem_get_float(mem_sensor_array, row, col, row_len, col_len),2);
+      
+      Serial.print(" ");
     }
     Serial.println();
   }
-  digitalWrite(led,LOW);
+  
   
 //
 //
