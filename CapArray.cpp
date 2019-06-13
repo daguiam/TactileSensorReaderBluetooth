@@ -11,6 +11,9 @@ uint8_t row_array[] = CAP_ROW_ARRAY;
 uint8_t column_array[] = CAP_COLUMN_ARRAY;
 
 
+
+
+
 // switches the given row to signal
 int cap_switch_row_signal(uint8_t row, uint8_t signal, uint8_t data, uint8_t clear) {
   // The whole row switches must be cleared before setting to a single signal
@@ -336,4 +339,36 @@ int cap_calibrate_sensors(float * mem_sensor_array,
   }
   
   return 0;
+}
+
+
+
+#define SEND_DATA_LENGTH 2+2+CAP_MEM_SIZE*sizeof(float)
+union dataPacket{
+  struct {
+    uint16_t command;
+    uint16_t length;
+    float data[CAP_MEM_SIZE];
+    float extra[10];
+    
+  }packet;
+  byte bytes[SEND_DATA_LENGTH];
+};
+  
+
+int cap_send_sensor_array(float * mem_sensor_array,
+                              uint8_t row_len, 
+                              uint8_t col_len){
+  
+  union dataPacket send_data;
+  int row=5, col=5;
+
+  send_data.packet.command = 255*255;
+  send_data.packet.length = row_len*col_len;
+  for (row=0; row<row_len; row++){
+    for (col=0; col<col_len; col++){
+      mem_copy_float(mem_sensor_array, &send_data.packet.data[0], row_len, col_len);
+    }
+  }
+  Serial.write(send_data.bytes, SEND_DATA_LENGTH);
 }

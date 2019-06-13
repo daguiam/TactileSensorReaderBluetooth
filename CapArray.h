@@ -95,3 +95,9 @@ int cap_calibrate_sensors(float * mem_sensor_array,
                               uint8_t row_len, 
                               uint8_t col_len
                               );
+
+
+
+
+int cap_send_sensor_array(float * mem_sensor_array, uint8_t row_len, uint8_t col_len);
+  

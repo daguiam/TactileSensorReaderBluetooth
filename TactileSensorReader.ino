@@ -118,9 +118,9 @@ void setup() {
 
   // Printing switch info of MUX 1 and 2
 //  Serial.print("MUX1\n");
-  mux_read_config_matrix(I2C_ADDR_MUX1);
+//  mux_read_config_matrix(I2C_ADDR_MUX1);
 //  Serial.print("MUX2\n");
-  mux_read_config_matrix(I2C_ADDR_MUX2);
+//  mux_read_config_matrix(I2C_ADDR_MUX2);
 
 
   // Resetting FDC1004
@@ -149,7 +149,7 @@ void setup() {
   cdc_get_measurement_configuration(I2C_ADDR_CDC, CDC_MEAS4);
 
 
-  cdc_print_configuration(I2C_ADDR_CDC);
+//  cdc_print_configuration(I2C_ADDR_CDC);
 
   cap_switch_all_rows_signal(CAP_ROW_SHLD1);
 
@@ -167,7 +167,7 @@ void setup() {
 
 
 
-  Serial.println("Clearing cap rows and columns");
+//  Serial.println("Clearing cap rows and columns");
   cap_switch_clear_all_rows();
   cap_switch_clear_all_columns();
 //  Serial.println("MUX1");
@@ -177,10 +177,10 @@ void setup() {
 //
 //
 
-  Serial.println("Setting all rows and columns to shield");
+//  Serial.println("Setting all rows and columns to shield");
   cap_switch_all_rows_signal(CAP_ROW_SHLD1);
   cap_switch_all_columns_signal(CAP_COL_SHLD1);
-  Serial.println("Settings row R01 to CIN1 and columns to GND");
+//  Serial.println("Settings row R01 to CIN1 and columns to GND");
   cap_switch_row_signal(CAP_R01, CAP_ROW_CIN1);
   cap_switch_column_signal(CAP_C01, CAP_COL_GND);
 
@@ -269,8 +269,11 @@ void loop() {
 //    mem_clear_int(mem_sensor_offset_array, row_len, col_len, 0);
 
   cap_get_measurement_iteration(mem_sensor_array, mem_sensor_capdac_array, mem_sensor_offset_array, row_len, col_len);
-  Serial.println("-sensor-");
-  mem_print_float(mem_sensor_array, row_len, col_len);
+//  Serial.println("-sensor-");
+//  mem_print_float(mem_sensor_array, row_len, col_len);
+
+
+  cap_send_sensor_array(mem_sensor_array, row_len, col_len);
 
 
 //  for (row=0; row<row_len; row++){
@@ -315,7 +318,7 @@ void loop() {
 //
 //
 //  cap_set_sensor_measurement_single(5,5);
-  cap_print_connections();
+//  cap_print_connections();
 
   
 

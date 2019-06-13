@@ -26,6 +26,14 @@ float mem_get_float(float * mem_array, int row, int col, int row_len, int col_le
   return mem_array[row*col_len + col];
 }
 
+
+
+int mem_copy_float(float * mem_src, float * mem_dst, int row_len, int col_len ){
+  for (int i=0; i<row_len*col_len; i++){
+    mem_dst[i] = mem_src[i];
+  }
+}
+  
 //////////////// INT
 
 int * mem_init_int(int row_len, int col_len, int value){
@@ -54,8 +62,8 @@ int mem_print_float(float * mem_array, int row_len, int col_len){
   int row,col;
   for (row=0; row<row_len; row++){
     for (col=0; col<col_len; col++){
-      Serial.print(mem_get_float(mem_array, row, col, row_len, col_len),2);
-      Serial.print(" ");
+      Serial.print(mem_get_float(mem_array, row, col, row_len, col_len),3);
+      Serial.print("\t");
     }
     Serial.println();
   }
