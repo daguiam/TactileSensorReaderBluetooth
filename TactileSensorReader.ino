@@ -3,12 +3,17 @@
  * 
  * 
  */
+#include <pthread.h>
 
 #include <Wire.h>
 #include "ADG2128.h"
 #include "FDC1004.h"
 #include "CapArray.h"
 #include "MemStorage.h"
+#include "parameters.h"
+#include "sercomm.h"
+
+
 
 #define led 13
 #define led2 17
@@ -23,6 +28,7 @@ int * mem_sensor_capdac_array;
 int * mem_sensor_offset_array;
 int row_len = CAP_ROW_ARRAY_LEN;
 int col_len = CAP_COLUMN_ARRAY_LEN;
+
 
 
 TaskHandle_t Task_LoopMeasurements;
@@ -66,16 +72,37 @@ void Task2Code( void * pvParameters ){
     delay(100);
     
   }
+}     
+
+
+void *Thread_AcquireSensorData(void *threadid) {
+
+  digitalWrite(led2, HIGH);
+
+  cap_get_measurement_iteration(mem_sensor_array, mem_sensor_capdac_array, mem_sensor_offset_array, row_len, col_len);
+
+//  cap_send_sensor_array(mem_sensor_array, row_len, col_len);
+
+
+  digitalWrite(led2, LOW);
+  
+   
 }
+
 
 
 
   
 void setup() {
-
+  pthread_t threads[4];
+  int returnValue;
   // Serial for debugging connection
 //    Serial.begin(9600);
-  Serial.begin(230400);
+
+
+
+
+  Serial.begin(SERIAL_BAUD);
 
   
   randomSeed(analogRead(0));
@@ -84,7 +111,7 @@ void setup() {
   // Initializing wire connection
   Wire.begin();
   // set clock to 400 kHz
-  Wire.setClock(400000);
+  Wire.setClock(I2C_CLOCK);
 
 
   // Initializing IO
@@ -199,6 +226,7 @@ void setup() {
 //                    &Task_LoopMeasurements,      /* Task handle to keep track of created task */
 //                    0);          /* pin task to core 1 */
 
+//  returnValue = pthread_create(&threads[0], NULL, Thread_AcquireSensorData, (void *)0);
 
 }
 
@@ -210,12 +238,12 @@ void loop() {
   int j = 0;
   int row, col;
   char addr = 0;
-  char rb_addr = 0;
-  char rb_addr_array[] = MUX_READ_X_ARRAY;
 
-  uint8_t row_array[] = CAP_ROW_ARRAY;
-  uint8_t column_array[] = CAP_COLUMN_ARRAY;
+char rb_addr = 0;
+char rb_addr_array[] = MUX_READ_X_ARRAY;
 
+uint8_t row_array[] = CAP_ROW_ARRAY;
+uint8_t column_array[] = CAP_COLUMN_ARRAY;
   
   char status = 0;
   uint16_t aux = 0;
@@ -224,14 +252,14 @@ void loop() {
   float capacitance = 0;
   int capdac;
 
-  
+  Order order;
   digitalWrite(led,HIGH);
 
   digitalWrite(led,LOW);
 
 
 
-
+  // Verifies if there is a message on the serial port
 
 
 
@@ -241,9 +269,16 @@ void loop() {
 
 
   // Configure the measurements
-  cdc_set_measurement_configuration(I2C_ADDR_CDC, CDC_MEAS1, CDC_CHANNEL_CIN1, CDC_CHANNEL_CAPDAC, capdac);
+//  cdc_set_measurement_configuration(I2C_ADDR_CDC, CDC_MEAS1, CDC_CHANNEL_CIN1, CDC_CHANNEL_CAPDAC, capdac);
 
   digitalWrite(led2, HIGH);
+  cap_get_measurement_iteration(mem_sensor_array, mem_sensor_capdac_array, mem_sensor_offset_array, row_len, col_len);
+  cap_send_sensor_array(mem_sensor_array, row_len, col_len);
+  digitalWrite(led2, LOW);
+
+
+
+
 
   // Clear the memory 0    
 
@@ -268,12 +303,9 @@ void loop() {
 //
 //    mem_clear_int(mem_sensor_offset_array, row_len, col_len, 0);
 
-  cap_get_measurement_iteration(mem_sensor_array, mem_sensor_capdac_array, mem_sensor_offset_array, row_len, col_len);
 //  Serial.println("-sensor-");
 //  mem_print_float(mem_sensor_array, row_len, col_len);
 
-
-  cap_send_sensor_array(mem_sensor_array, row_len, col_len);
 
 
 //  for (row=0; row<row_len; row++){
@@ -283,7 +315,6 @@ void loop() {
 //    }
 //
 //  }
-  digitalWrite(led2, LOW);
 
 //
 //  for (capdac=0; capdac<32; capdac++){
