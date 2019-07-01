@@ -22,6 +22,18 @@
 
 int capdac_value = 0;
 
+// Each memory array is stored inside the FIFO
+
+#define MEM_FIFO_SIZE 3
+float * mem_sensor_fifo[MEM_FIFO_SIZE];
+int mem_sensor_fifo_index = 0;
+int mem_sensor_fifo_done_index = -1;
+
+int mem_fifo_next_index(int mem_sensor_fifo_index){
+  return (mem_sensor_fifo_index+1)%MEM_FIFO_SIZE;
+}
+
+
 float * mem_sensor_array;
 int * mem_sensor_capdac_array;
 int * mem_sensor_offset_array;
@@ -83,10 +95,24 @@ void *Thread_AcquireSensorData(void *threadid) {
           flag_acq_running = 0;
           
           break;
+
+          
+        case DONE_ACQ:
+          if (flag_acq_done){
+            Serial.println("ACQ Done");
+          }else{
+            Serial.println("ACQ Not Done");
+          }
+          break;
   
         case READ_ACQ:
-          cap_print_sensor_array(mem_sensor_array, row_len, col_len);
-          flag_acq_done = 0;
+          if (!flag_acq_done){
+            Serial.println("Acquisition not done");
+          }else{
+            cap_print_sensor_array(mem_sensor_array, row_len, col_len);
+//            cap_print_sensor_array(mem_sensor_fifo[mem_sensor_fifo_done_index], row_len, col_len);
+            flag_acq_done = 0;
+          }
           break;
         case READ_ACQ_BIN:
           cap_send_sensor_array(mem_sensor_array, row_len, col_len);
@@ -94,9 +120,8 @@ void *Thread_AcquireSensorData(void *threadid) {
           break;
   
         case CAL_SENSOR:
-  //        Serial.println("CAL Sensor");
-          //  Serial.println("Setting all rows and columns to shield");
           flag_acq_calibrate = 1;
+          
           
           break;
 
@@ -124,6 +149,7 @@ void *Thread_AcquireSensorData(void *threadid) {
 void setup() {
   pthread_t threads[4];
   int returnValue;
+  int i;
   // Serial for debugging connection
 //    Serial.begin(9600);
 
@@ -210,11 +236,15 @@ void setup() {
 //
 //  
 //  // Initalize memory
-//  mem_sensors_values_1 = mem_init_float(CAP_ROW_ARRAY_LEN,CAP_COLUMN_ARRAY_LEN);
-//  mem_sensors_values = mem_sensors_values_1;
+  for (i=0; i<MEM_FIFO_SIZE; i++){
+    mem_sensor_fifo[i] = mem_init_float(row_len, col_len);
+  }
+  
+//  mem_sensor_array = mem_init_float(row_len, col_len);
 
-  mem_sensor_array = mem_init_float(row_len, col_len);
-  mem_sensor_capdac_array = mem_init_int(row_len, col_len, 5);
+  mem_sensor_array = mem_sensor_fifo[mem_sensor_fifo_index];
+  
+  mem_sensor_capdac_array = mem_init_int(row_len, col_len, 0);
   mem_sensor_offset_array = mem_init_int(row_len, col_len);
 
 
@@ -269,16 +299,24 @@ void loop() {
   if (flag_acq_calibrate==1){
     cap_switch_all_rows_signal(CAP_ROW_SHLD1);
     cap_switch_all_columns_signal(CAP_COL_SHLD1); 
-    cap_calibrate_sensors(mem_sensor_array, mem_sensor_capdac_array, mem_sensor_offset_array, row_len, col_len);
+    cap_calibrate_sensors(mem_sensor_fifo[mem_sensor_fifo_index], mem_sensor_capdac_array, mem_sensor_offset_array, row_len, col_len);
+    flag_acq_calibrate = 0;
   }
 
 // flag_acq_running=1;
   if (flag_acq_running==1){
   
     digitalWrite(led2, HIGH);
-    cap_get_measurement_iteration(mem_sensor_array, mem_sensor_capdac_array, mem_sensor_offset_array, row_len, col_len);
+    cap_get_measurement_iteration(mem_sensor_fifo[mem_sensor_fifo_index], mem_sensor_capdac_array, mem_sensor_offset_array, row_len, col_len);
     digitalWrite(led2, LOW);
     flag_acq_done = 1;
+
+    mem_sensor_fifo_done_index = mem_sensor_fifo_index ;
+    mem_sensor_array = mem_sensor_fifo[mem_sensor_fifo_index];
+    mem_sensor_fifo_index = mem_fifo_next_index(mem_sensor_fifo_index);
+    Serial.println(mem_sensor_fifo_index);
+    
+
   }
 
 //
