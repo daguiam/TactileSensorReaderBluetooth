@@ -187,34 +187,46 @@ float * cap_get_measurement_iteration(float * mem_sensor_array,
   cap_switch_all_columns_signal(CAP_COL_SHLD1);
   
 
-  
+  // capdac value is the same for all capacitors
+  capdac = mem_get_int(mem_sensor_capdac_array, row, col, row_len, col_len);
+  cdc_set_measurement_configuration(I2C_ADDR_CDC, CDC_MEAS1, CDC_CHANNEL_CIN1, CDC_CHANNEL_CAPDAC, capdac);
+
   // Sets all rows and columns to SHLD1
   for (row=0; row<row_len; row++){
+
+
+      // Disconnects SHLD from current row
+      cap_switch_row_signal(row_array[row], CAP_ROW_SHLD1, MUX_SWITCH_OFF, 0);
+      // Sets the capacitive sensor connections to row
+      cap_switch_row_signal(row_array[row], CAP_ROW_CIN1, MUX_SWITCH_ON, 0);
+    
     for (col=0; col<col_len; col++){
 
       // Reading the corresponding CAPDAC value [NOT IMPLEMENTED]
-      capdac = mem_get_int(mem_sensor_capdac_array, row, col, row_len, col_len);
+//      capdac = mem_get_int(mem_sensor_capdac_array, row, col, row_len, col_len);
       offset = mem_get_int(mem_sensor_offset_array, row, col, row_len, col_len);
       cdc_set_offset(I2C_ADDR_CDC, CDC_CHANNEL_CIN1, (int16_t) offset);
 
 
-      cdc_set_measurement_configuration(I2C_ADDR_CDC, CDC_MEAS1, CDC_CHANNEL_CIN1, CDC_CHANNEL_CAPDAC, capdac);
-      // [TO DO] cdc_set offset
+//      cdc_set_measurement_configuration(I2C_ADDR_CDC, CDC_MEAS1, CDC_CHANNEL_CIN1, CDC_CHANNEL_CAPDAC, capdac);
+
+
 //      Serial.print("Offset is ");Serial.println(offset, HEX);
 //      Serial.print("Offset16 is ");Serial.println((int16_t)offset);
 
 
       // Disconnects SHLD from current pin
-      cap_switch_row_signal(row_array[row], CAP_ROW_SHLD1, MUX_SWITCH_OFF, 0);
+//      cap_switch_row_signal(row_array[row], CAP_ROW_SHLD1, MUX_SWITCH_OFF, 0);
       cap_switch_column_signal(column_array[col], CAP_COL_SHLD1, MUX_SWITCH_OFF, 0);
       
       // Sets the capacitive sensor connections (row to CIN and col to GND)
-      cap_switch_row_signal(row_array[row], CAP_ROW_CIN1, MUX_SWITCH_ON, 0);
+//      cap_switch_row_signal(row_array[row], CAP_ROW_CIN1, MUX_SWITCH_ON, 0);
       cap_switch_column_signal(column_array[col], CAP_COL_GND, MUX_SWITCH_ON, 0);
     
     
       // MEASURE
       cdc_set_measurement_enable(I2C_ADDR_CDC, CDC_MEAS1, CDC_ENABLE);
+      
       while(!cdc_get_measurement_completed(I2C_ADDR_CDC,CDC_MEAS1));
 
       value = cdc_get_measurement(I2C_ADDR_CDC, CDC_MEAS1);
@@ -226,14 +238,23 @@ float * cap_get_measurement_iteration(float * mem_sensor_array,
 
 
       // Disconnects SHLD from current pin
-      cap_switch_row_signal(row_array[row], CAP_ROW_CIN1, MUX_SWITCH_OFF, 0);
+//      cap_switch_row_signal(row_array[row], CAP_ROW_CIN1, MUX_SWITCH_OFF, 0);
       cap_switch_column_signal(column_array[col], CAP_COL_GND, MUX_SWITCH_OFF, 0);
 
       
       // Sets capacitive sensor connections back to shield
-      cap_switch_row_signal(row_array[row], CAP_ROW_SHLD1);
-      cap_switch_column_signal(column_array[col], CAP_COL_SHLD1);
+//      cap_switch_row_signal(row_array[row], CAP_ROW_SHLD1, MUX_SWITCH_ON, 0);
+      cap_switch_column_signal(column_array[col], CAP_COL_SHLD1, MUX_SWITCH_ON, 0);
+      
+      
+//      cap_switch_row_signal(row_array[row], CAP_ROW_SHLD1);
+//      cap_switch_column_signal(column_array[col], CAP_COL_SHLD1);
     }
+    
+      // Disconnects SHLD from current pin
+      cap_switch_row_signal(row_array[row], CAP_ROW_CIN1, MUX_SWITCH_OFF, 0);
+      // Sets capacitive sensor connections back to shield
+      cap_switch_row_signal(row_array[row], CAP_ROW_SHLD1, MUX_SWITCH_ON, 0);
   }
   
   return mem_sensor_array;
@@ -272,6 +293,8 @@ int cap_calibrate_sensors(float * mem_sensor_array,
   row=0;
   col=0;
   for (capdac=0; capdac<CDC_CAPDAC_MAX; capdac++){
+    cdc_set_offset(I2C_ADDR_CDC, CDC_CHANNEL_CIN1, (int16_t) 0);
+
     capacitance = cap_get_measurement_single(row, col, capdac);
 //   Serial.print("Capdac is estimated as ");Serial.println(capdac);
 //   Serial.print("capacitance is ");Serial.println(capacitance);
@@ -291,11 +314,13 @@ int cap_calibrate_sensors(float * mem_sensor_array,
   for (row=0; row<row_len; row++){
     for (col=0; col<col_len; col++){
 
-      // Reading the corresponding CAPDAC value [NOT IMPLEMENTED]
+      // Reading the corresponding CAPDAC value 
       capdac = mem_get_int(mem_sensor_capdac_array, row, col, row_len, col_len);
-//      offset = mem_get_int(mem_sensor_offset_array, row, col, row_len, col_len);
+      offset = mem_get_int(mem_sensor_offset_array, row, col, row_len, col_len);
 
       
+      cdc_set_offset(I2C_ADDR_CDC, CDC_CHANNEL_CIN1, (int16_t) 0);
+
       cdc_set_measurement_configuration(I2C_ADDR_CDC, CDC_MEAS1, CDC_CHANNEL_CIN1, CDC_CHANNEL_CAPDAC, capdac);
 
       // Disconnects SHLD from current pin
@@ -312,10 +337,8 @@ int cap_calibrate_sensors(float * mem_sensor_array,
       while(!cdc_get_measurement_completed(I2C_ADDR_CDC,CDC_MEAS1));
       value = cdc_get_measurement(I2C_ADDR_CDC, CDC_MEAS1);
       offset =  -value/65536;
-//       Serial.print("row is ");Serial.println(row);
-//       Serial.print("col is ");Serial.println(col);
-//
-//      Serial.print("offset is ");Serial.println(value, HEX);
+  
+//       Serial.print("[");Serial.print(row);Serial.print(", ");Serial.print(col);Serial.print("]   ");Serial.println(value, HEX);
 //      Serial.print("offset/2**16 is ");Serial.println(value/65536, HEX);
 //      Serial.print("Offset is ");Serial.println(offset);
 
@@ -371,4 +394,11 @@ int cap_send_sensor_array(float * mem_sensor_array,
     }
   }
   Serial.write(send_data.bytes, SEND_DATA_LENGTH);
+}
+
+int cap_print_sensor_array(float * mem_sensor_array,
+                              uint8_t row_len, 
+                              uint8_t col_len){
+  
+  mem_print_float(mem_sensor_array, row_len, col_len);
 }

@@ -4,7 +4,7 @@
  * 
  */
 #include <pthread.h>
-
+#include <Arduino.h>
 #include <Wire.h>
 #include "ADG2128.h"
 #include "FDC1004.h"
@@ -18,10 +18,9 @@
 #define led 13
 #define led2 17
 
+// Global variables
 
 int capdac_value = 0;
-
-
 
 float * mem_sensor_array;
 int * mem_sensor_capdac_array;
@@ -29,63 +28,92 @@ int * mem_sensor_offset_array;
 int row_len = CAP_ROW_ARRAY_LEN;
 int col_len = CAP_COLUMN_ARRAY_LEN;
 
+// Execution flags
+
+//int flag_acq_start = 0;     // Flags to start the measurements
+//int flag_acq_stop = 1;      // Flags to stop the measurements 
+int flag_acq_running = 0;     // Flag that indicates measurements are being made
+
+int flag_acq_done = 0;
+int flag_acq_calibrate = 0; // Flags to calibrate the sensor
 
 
-TaskHandle_t Task_LoopMeasurements;
+
+Order read_order()
+{
+  return (Order) Serial.read();
+}
+
+
+//TaskHandle_t Task_LoopMeasurements;
 
 
 
 void write_text(char * text){
   Serial.write(text);
 }
-
-
-
-
-void Task2Code( void * pvParameters ){
-
-  int row, col;
-  int capdac=7;
-  float capacitance;
-  Serial.print("Task2 running on core ");
-  Serial.println(xPortGetCoreID());
-
-
-  // Configure the measurements
-  cdc_set_measurement_configuration(I2C_ADDR_CDC, CDC_MEAS1, CDC_CHANNEL_CIN1, CDC_CHANNEL_CAPDAC, capdac);
-
-  for(;;){
-    digitalWrite(led2, HIGH);
-
-    // Clear the memory 0    
-
-    mem_clear_float(mem_sensor_array, row_len, col_len);
-
-    for (row=0; row<row_len; row++){
-      for (col=0; col<col_len; col++){
-        capacitance = cap_get_measurement_single(row, col, capdac);
-        mem_store_float(mem_sensor_array, row, col, row_len, col_len, capacitance);
-      }
-
-    }
-    digitalWrite(led2, LOW);
-    delay(100);
-    
-  }
-}     
+   
 
 
 void *Thread_AcquireSensorData(void *threadid) {
 
-  digitalWrite(led2, HIGH);
+  Serial.println("Started comm thread");
 
-  cap_get_measurement_iteration(mem_sensor_array, mem_sensor_capdac_array, mem_sensor_offset_array, row_len, col_len);
-
-//  cap_send_sensor_array(mem_sensor_array, row_len, col_len);
+  for(;;){
 
 
-  digitalWrite(led2, LOW);
+    if(Serial.available() > 0){
+        digitalWrite(led, HIGH);
   
+      
+      // The first byte received is the instruction
+      Order order_received = read_order();
+  //    Serial.println(order_received);
+  
+      switch(order_received){
+        case START_ACQ:
+          Serial.println("ACQ Start");
+          flag_acq_running = 1;
+          flag_acq_done = 0;
+          
+          break;
+          
+        case STOP_ACQ:
+          Serial.println("ACQ Stop");
+          flag_acq_running = 0;
+          
+          break;
+  
+        case READ_ACQ:
+          cap_print_sensor_array(mem_sensor_array, row_len, col_len);
+          flag_acq_done = 0;
+          break;
+        case READ_ACQ_BIN:
+          cap_send_sensor_array(mem_sensor_array, row_len, col_len);
+          flag_acq_done = 0;
+          break;
+  
+        case CAL_SENSOR:
+  //        Serial.println("CAL Sensor");
+          //  Serial.println("Setting all rows and columns to shield");
+          flag_acq_calibrate = 1;
+          
+          break;
+
+        case EOL:
+          //ignore
+          break;
+        default:
+          Serial.println("Unrecognized command");
+          
+          break;
+  
+      }
+      digitalWrite(led, LOW);
+
+    }
+    vTaskDelay(10);
+  }
    
 }
 
@@ -104,7 +132,7 @@ void setup() {
 
   Serial.begin(SERIAL_BAUD);
 
-  
+  Serial.println("Started");
   randomSeed(analogRead(0));
 
   
@@ -112,6 +140,7 @@ void setup() {
   Wire.begin();
   // set clock to 400 kHz
   Wire.setClock(I2C_CLOCK);
+
 
 
   // Initializing IO
@@ -123,9 +152,15 @@ void setup() {
 
   // Initializing ADG2128 MUX
   pinMode(IO_MUX_RESET_N, OUTPUT);
+
+  mux_reset();
   digitalWrite(IO_MUX_RESET_N,HIGH);
+
   
   // Checking operation of MUX  
+  if (!mux_test_operation(I2C_ADDR_MUX2)){
+    Serial.print("MUX2 not working properly \n");
+  }
   if (!mux_test_operation(I2C_ADDR_MUX1)){
     Serial.print("MUX1 not working properly \n");
   }
@@ -133,9 +168,8 @@ void setup() {
     Serial.print("MUX2 not working properly \n");
   }
 
-
-  
   mux_reset();
+
   //  Connect CIN1 on MUX1 Y5 to X0
   mux_write_switch_config(I2C_ADDR_MUX1, mux_get_addr_x(0), mux_get_addr_y(5), MUX_SWITCH_ON, MUX_LDSW_LOAD );
 
@@ -143,23 +177,16 @@ void setup() {
   mux_write_switch_config(I2C_ADDR_MUX1, mux_get_addr_x(0), mux_get_addr_y(4), MUX_SWITCH_OFF, MUX_LDSW_LOAD );
 //  mux_read_config_matrix(I2C_ADDR_MUX1);
 
-  // Printing switch info of MUX 1 and 2
-//  Serial.print("MUX1\n");
-//  mux_read_config_matrix(I2C_ADDR_MUX1);
-//  Serial.print("MUX2\n");
-//  mux_read_config_matrix(I2C_ADDR_MUX2);
-
-
   // Resetting FDC1004
 
   cdc_reset_device(I2C_ADDR_CDC);
+
   // Checking connectivity and operation of FDC1004
   if (!cdc_test_id(I2C_ADDR_CDC)){
     Serial.print("CDC not working properly \n");
   }
 
  #define CDC_MEASUREMENT CDC_MEAS1
-
   cdc_set_measurement_configuration(I2C_ADDR_CDC, CDC_MEASUREMENT, CDC_CHANNEL_CIN1, CDC_CHANNEL_CAPDAC, 0);
   cdc_set_repeat_measurements(I2C_ADDR_CDC, CDC_ENABLE);
   cdc_set_repeat_measurements(I2C_ADDR_CDC, CDC_DISABLE);
@@ -180,7 +207,6 @@ void setup() {
 
   cap_switch_all_rows_signal(CAP_ROW_SHLD1);
 
-
 //
 //  
 //  // Initalize memory
@@ -197,38 +223,21 @@ void setup() {
 //  Serial.println("Clearing cap rows and columns");
   cap_switch_clear_all_rows();
   cap_switch_clear_all_columns();
-//  Serial.println("MUX1");
-//  mux_read_config_matrix(I2C_ADDR_MUX1);
-//  Serial.println("MUX2");
-//  mux_read_config_matrix(I2C_ADDR_MUX2);
-//
-//
-
 //  Serial.println("Setting all rows and columns to shield");
   cap_switch_all_rows_signal(CAP_ROW_SHLD1);
   cap_switch_all_columns_signal(CAP_COL_SHLD1);
-//  Serial.println("Settings row R01 to CIN1 and columns to GND");
-  cap_switch_row_signal(CAP_R01, CAP_ROW_CIN1);
-  cap_switch_column_signal(CAP_C01, CAP_COL_GND);
-
 
   cap_calibrate_sensors(mem_sensor_array, mem_sensor_capdac_array, mem_sensor_offset_array, row_len, col_len);
 
 
-  
-//
-//  xTaskCreatePinnedToCore(
-//                    Task2Code,   /* Task function. */
-//                    "Task_LoopMeasurements",     /* name of task. */
-//                    10000,       /* Stack size of task */
-//                    NULL,        /* parameter of the task */
-//                    1,           /* priority of the task */
-//                    &Task_LoopMeasurements,      /* Task handle to keep track of created task */
-//                    0);          /* pin task to core 1 */
 
-//  returnValue = pthread_create(&threads[0], NULL, Thread_AcquireSensorData, (void *)0);
+  returnValue = pthread_create(&threads[0], NULL, Thread_AcquireSensorData, (void *)0);
+  
 
 }
+
+
+
 
 
 
@@ -239,12 +248,12 @@ void loop() {
   int row, col;
   char addr = 0;
 
-char rb_addr = 0;
-char rb_addr_array[] = MUX_READ_X_ARRAY;
-
-uint8_t row_array[] = CAP_ROW_ARRAY;
-uint8_t column_array[] = CAP_COLUMN_ARRAY;
+  char rb_addr = 0;
+  char rb_addr_array[] = MUX_READ_X_ARRAY;
   
+  uint8_t row_array[] = CAP_ROW_ARRAY;
+  uint8_t column_array[] = CAP_COLUMN_ARRAY;
+    
   char status = 0;
   uint16_t aux = 0;
   int measurement = 0;
@@ -253,17 +262,90 @@ uint8_t column_array[] = CAP_COLUMN_ARRAY;
   int capdac;
 
   Order order;
-  digitalWrite(led,HIGH);
 
-  digitalWrite(led,LOW);
+
+//  Serial.println("running");
+
+  if (flag_acq_calibrate==1){
+    cap_switch_all_rows_signal(CAP_ROW_SHLD1);
+    cap_switch_all_columns_signal(CAP_COL_SHLD1); 
+    cap_calibrate_sensors(mem_sensor_array, mem_sensor_capdac_array, mem_sensor_offset_array, row_len, col_len);
+  }
+
+// flag_acq_running=1;
+  if (flag_acq_running==1){
+  
+    digitalWrite(led2, HIGH);
+    cap_get_measurement_iteration(mem_sensor_array, mem_sensor_capdac_array, mem_sensor_offset_array, row_len, col_len);
+    digitalWrite(led2, LOW);
+    flag_acq_done = 1;
+  }
+
+//
+//  digitalWrite(led2, HIGH);
+//  cap_get_measurement_iteration(mem_sensor_array, mem_sensor_capdac_array, mem_sensor_offset_array, row_len, col_len);
+//  digitalWrite(led2, LOW);
+
 
 
 
   // Verifies if there is a message on the serial port
+  
+//  
+//  if(Serial.available() > 0){
+//    
+//    
+//    // The first byte received is the instruction
+//    Order order_received = read_order();
+////    Serial.println(order_received);
+//
+//    switch(order_received){
+//      case START_ACQ:
+//        Serial.println("ACQ Start");
+//        
+//        break;
+//      case STOP_ACQ:
+//        Serial.println("ACQ Stop");
+//        
+//        break;
+//
+//      case READ_ACQ:
+////        Serial.println("READ Acq");
+////        digitalWrite(led2, HIGH);
+////        cap_get_measurement_iteration(mem_sensor_array, mem_sensor_capdac_array, mem_sensor_offset_array, row_len, col_len);
+////        cap_send_sensor_array(mem_sensor_array, row_len, col_len);
+//        cap_print_sensor_array(mem_sensor_array, row_len, col_len);
+////        digitalWrite(led2, LOW);
+//        break;
+//      case READ_ACQ_BIN:
+////        Serial.println("READ Acq");
+////        digitalWrite(led2, HIGH);
+////        cap_get_measurement_iteration(mem_sensor_array, mem_sensor_capdac_array, mem_sensor_offset_array, row_len, col_len);
+//        cap_send_sensor_array(mem_sensor_array, row_len, col_len);
+////        cap_print_sensor_array(mem_sensor_array, row_len, col_len);
+////        digitalWrite(led2, LOW);
+//        break;
+//
+//      case CAL_SENSOR:
+////        Serial.println("CAL Sensor");
+//        //  Serial.println("Setting all rows and columns to shield");
+//        cap_switch_all_rows_signal(CAP_ROW_SHLD1);
+//        cap_switch_all_columns_signal(CAP_COL_SHLD1);
+//
+//        cap_calibrate_sensors(mem_sensor_array, mem_sensor_capdac_array, mem_sensor_offset_array, row_len, col_len);
+//
+//        break;
+//      default:
+//        Serial.println("Unrecognized command");
+//        
+//        break;
+//
+//    }
+//  }
 
 
 
-  digitalWrite(led,HIGH);
+//  digitalWrite(led,HIGH);
   
 //  cdc_set_measurement_configuration(I2C_ADDR_CDC, CDC_MEAS1, CDC_CHANNEL_CIN1, CDC_CHANNEL_CAPDAC, capdac);
 
@@ -271,12 +353,10 @@ uint8_t column_array[] = CAP_COLUMN_ARRAY;
   // Configure the measurements
 //  cdc_set_measurement_configuration(I2C_ADDR_CDC, CDC_MEAS1, CDC_CHANNEL_CIN1, CDC_CHANNEL_CAPDAC, capdac);
 
-  digitalWrite(led2, HIGH);
-  cap_get_measurement_iteration(mem_sensor_array, mem_sensor_capdac_array, mem_sensor_offset_array, row_len, col_len);
-  cap_send_sensor_array(mem_sensor_array, row_len, col_len);
-  digitalWrite(led2, LOW);
-
-
+//  digitalWrite(led2, HIGH);
+////  cap_get_measurement_iteration(mem_sensor_array, mem_sensor_capdac_array, mem_sensor_offset_array, row_len, col_len);
+////  cap_send_sensor_array(mem_sensor_array, row_len, col_len);
+//  digitalWrite(led2, LOW);
 
 
 
@@ -343,7 +423,7 @@ uint8_t column_array[] = CAP_COLUMN_ARRAY;
 //  mem_print_float(mem_sensor_array, row_len, col_len);
 
 
-  digitalWrite(led,LOW);
+//  digitalWrite(led,LOW);
 
   
 //

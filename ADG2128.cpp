@@ -52,7 +52,12 @@ char mux_write_switch_config(uint8_t addr, uint8_t addr_x, uint8_t addr_y, uint8
   Wire.beginTransmission(addr);
   Wire.write(package_char[1]);
   Wire.write(package_char[0]); 
+  status = 0xff;
   status = Wire.endTransmission(); 
+  
+  if (status){
+    Serial.print("Wire Transmission error: "); Serial.println(status,DEC);
+  }
   return status;
 }
 
@@ -64,8 +69,12 @@ char mux_read_config(uint8_t addr, uint8_t read_addr_X, uint8_t verbose){
 
   Wire.write(read_addr_X);
   Wire.write(0xAA); 
-  
+  status = 0xff;
+
   status = Wire.endTransmission(); 
+  if (status){
+    Serial.print("Wire Transmission error: "); Serial.println(status,DEC);
+  }
   if (verbose){
     Serial.print("status of transmission: ");
     Serial.print(status,BIN);
@@ -78,6 +87,7 @@ char mux_read_config(uint8_t addr, uint8_t read_addr_X, uint8_t verbose){
 //  Serial.print("Waiting for reply from slave \n");
   while (Wire.available()<2){
     status = Wire.available();
+    
   }
 
   if (verbose){

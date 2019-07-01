@@ -5,6 +5,7 @@
 #define I2C_ADDR_CDC  0b01010000
 
 
+
 // Definition of the MUX1 X inputs connected to the Capacitor array rows
 #define CAP_R01  0
 #define CAP_R02  6
@@ -100,4 +101,5 @@ int cap_calibrate_sensors(float * mem_sensor_array,
 
 
 int cap_send_sensor_array(float * mem_sensor_array, uint8_t row_len, uint8_t col_len);
-  
+
+int cap_print_sensor_array(float * mem_sensor_array, uint8_t row_len, uint8_t col_len);

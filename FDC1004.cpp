@@ -2,6 +2,7 @@
 #include <Wire.h>
 
 
+
 #include "FDC1004.h"
 
 
@@ -40,12 +41,19 @@ uint16_t cdc_read_register(uint8_t addr, uint8_t pointer, uint8_t verbose){
   // Sends 2 frame write to set the register pointer to the slave
   Wire.beginTransmission(addr);
   Wire.write(pointer);
+  status = 0xff;
   status = Wire.endTransmission(); 
+  
+  if (status){
+    Serial.print("Wire Transmission error: "); Serial.println(status,DEC);
+  }
+  
 
   // Reading from slave device
   Wire.requestFrom(addr, CDC_REGISTER_READ_SIZE);
   // waiting for slave to reply
   while (Wire.available()<CDC_REGISTER_READ_SIZE){
+//    Serial.println(Wire.available(), HEX);delay(100);
     status = Wire.available();
   }
   status = Wire.read();
