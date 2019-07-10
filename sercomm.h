@@ -7,9 +7,11 @@ enum Order {
   READ_ACQ_BIN = 'b',
   DONE_ACQ = 'd',
   CAL_SENSOR = 'c',
-  CAL_DONE = 'e',
+//  CAL_DONE = 'e',
   EOL = '\n',
   ERROR = 'E',
+  TRUE = 'T',
+  FALSE = 'F',
  
 };
 

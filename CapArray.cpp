@@ -367,6 +367,7 @@ int cap_calibrate_sensors(float * mem_sensor_array,
 
 
 #define SEND_DATA_LENGTH 2+2+CAP_MEM_SIZE*sizeof(float)
+#define MEM_DATA_LENGTH CAP_MEM_SIZE*sizeof(float)
 union dataPacket{
   struct {
     uint16_t command;
@@ -377,23 +378,31 @@ union dataPacket{
   }packet;
   byte bytes[SEND_DATA_LENGTH];
 };
-  
+
+union memPacket{
+  float data[CAP_MEM_SIZE];
+  byte bytes[MEM_DATA_LENGTH];
+};
 
 int cap_send_sensor_array(float * mem_sensor_array,
                               uint8_t row_len, 
                               uint8_t col_len){
   
-  union dataPacket send_data;
+//  union dataPacket send_data;
+  union memPacket mem_data;
   int row=5, col=5;
 
-  send_data.packet.command = 256*255;
-  send_data.packet.length = row_len*col_len;
+//  send_data.packet.command = 256*255;
+//  send_data.packet.length = row_len*col_len;
   for (row=0; row<row_len; row++){
     for (col=0; col<col_len; col++){
-      mem_copy_float(mem_sensor_array, &send_data.packet.data[0], row_len, col_len);
+//      mem_copy_float(mem_sensor_array, &send_data.packet.data[0], row_len, col_len);
+      mem_copy_float(mem_sensor_array, &mem_data.data[0], row_len, col_len);
     }
   }
-  Serial.write(send_data.bytes, SEND_DATA_LENGTH);
+//  Serial.write(send_data.bytes, SEND_DATA_LENGTH);
+//  Serial.println(MEM_DATA_LENGTH);
+  Serial.write(mem_data.bytes, MEM_DATA_LENGTH);
 }
 
 int cap_print_sensor_array(float * mem_sensor_array,

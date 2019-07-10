@@ -84,7 +84,7 @@ void *Thread_AcquireSensorData(void *threadid) {
   
       switch(order_received){
         case START_ACQ:
-        
+          Serial.print((char)START_ACQ);
           Serial.println("ACQ Start");
           flag_acq_running = 1;
           flag_acq_done = 0;
@@ -92,6 +92,7 @@ void *Thread_AcquireSensorData(void *threadid) {
           break;
           
         case STOP_ACQ:
+          Serial.print((char)STOP_ACQ);
           Serial.println("ACQ Stop");
           flag_acq_running = 0;
           
@@ -99,28 +100,42 @@ void *Thread_AcquireSensorData(void *threadid) {
 
           
         case DONE_ACQ:
+          Serial.print((char)DONE_ACQ);
           if (flag_acq_done){
+            Serial.print((char)TRUE);
             Serial.println("ACQ Done");
           }else{
+            Serial.print((char)FALSE);
             Serial.println("ACQ Not Done");
           }
           break;
   
         case READ_ACQ:
           if (!flag_acq_done){
+            Serial.print((char)ERROR);
             Serial.println("ACQ Not Done");
           }else{
+            Serial.print((char)READ_ACQ);
+
             cap_print_sensor_array(mem_sensor_array, row_len, col_len);
 //            cap_print_sensor_array(mem_sensor_fifo[mem_sensor_fifo_done_index], row_len, col_len);
             flag_acq_done = 0;
           }
           break;
         case READ_ACQ_BIN:
-          cap_send_sensor_array(mem_sensor_array, row_len, col_len);
-          flag_acq_done = 0;
+
+          if (!flag_acq_done){
+            Serial.print((char)ERROR);
+            Serial.println("ACQ Not Done");
+          }else{
+            Serial.print((char)READ_ACQ_BIN);
+            cap_send_sensor_array(mem_sensor_array, row_len, col_len);
+            flag_acq_done = 0;
+          }
           break;
   
         case CAL_SENSOR:
+          Serial.print((char)CAL_SENSOR);
           flag_acq_calibrate = 1;
           
           
