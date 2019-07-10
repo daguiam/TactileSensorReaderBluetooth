@@ -84,6 +84,7 @@ void *Thread_AcquireSensorData(void *threadid) {
   
       switch(order_received){
         case START_ACQ:
+        
           Serial.println("ACQ Start");
           flag_acq_running = 1;
           flag_acq_done = 0;
@@ -107,7 +108,7 @@ void *Thread_AcquireSensorData(void *threadid) {
   
         case READ_ACQ:
           if (!flag_acq_done){
-            Serial.println("Acquisition not done");
+            Serial.println("ACQ Not Done");
           }else{
             cap_print_sensor_array(mem_sensor_array, row_len, col_len);
 //            cap_print_sensor_array(mem_sensor_fifo[mem_sensor_fifo_done_index], row_len, col_len);
@@ -314,7 +315,7 @@ void loop() {
     mem_sensor_fifo_done_index = mem_sensor_fifo_index ;
     mem_sensor_array = mem_sensor_fifo[mem_sensor_fifo_index];
     mem_sensor_fifo_index = mem_fifo_next_index(mem_sensor_fifo_index);
-    Serial.println(mem_sensor_fifo_index);
+//    Serial.println(mem_sensor_fifo_index);
     
 
   }

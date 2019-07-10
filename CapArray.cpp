@@ -386,7 +386,7 @@ int cap_send_sensor_array(float * mem_sensor_array,
   union dataPacket send_data;
   int row=5, col=5;
 
-  send_data.packet.command = 255*255;
+  send_data.packet.command = 256*255;
   send_data.packet.length = row_len*col_len;
   for (row=0; row<row_len; row++){
     for (col=0; col<col_len; col++){
