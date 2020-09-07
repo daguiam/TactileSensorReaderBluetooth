@@ -136,6 +136,8 @@ void *Thread_AcquireSensorData(void *threadid) {
   
         case CAL_SENSOR:
           Serial.print((char)CAL_SENSOR);
+          Serial.println("Calibration");
+
           flag_acq_calibrate = 1;
           
           
