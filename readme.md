@@ -16,5 +16,4 @@ https://github.com/espressif/arduino-esp32/blob/master/docs/arduino-ide/windows.
 2. Download the espressif esp32 tools from https://github.com/espressif/arduino-esp32.git
 3. Plug ESP32 board and allow for drivers to install (USB FTDI, Silicon Labs, or others)
 4. Start Arduino IDE
-5. `File > Preferences > Select sketchbook location` and point to the somewhre in the documents
 6. Select board in `Tools > Board`
