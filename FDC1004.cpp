@@ -343,8 +343,9 @@ int32_t cdc_get_measurement(uint8_t addr, uint8_t measurement){
       Serial.println("cdc_get_measurement error: non-existent measurement");
       
   }
-
-  aux = cdc_read_register(addr, msb_register);
+  // TODO: VERIFY I2C AUTO-INCREMENT check page 16 FDC1004 datasheet. To read MSB then LSB.
+  // Eliminate aux read, why is this here???
+  aux = cdc_read_register(addr, msb_register); // TODO: OPTIMIZE why aux?? eliminate
   output = cdc_read_register(addr, msb_register) << 16;
   aux = cdc_read_register(addr, lsb_register);
   output = output | cdc_read_register(addr, lsb_register);

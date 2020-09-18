@@ -223,17 +223,19 @@ void setup() {
 
   // Resetting FDC1004
 
-  cdc_reset_device(I2C_ADDR_CDC);
+  cdc_reset_device(I2C_ADDR_CDC); 
+  // Cost: 2 (R+W)
 
   // Checking connectivity and operation of FDC1004
   if (!cdc_test_id(I2C_ADDR_CDC)){
+    // Cost: 2
     Serial.print("CDC not working properly \n");
   }
 
  #define CDC_MEASUREMENT CDC_MEAS1
-  cdc_set_measurement_configuration(I2C_ADDR_CDC, CDC_MEASUREMENT, CDC_CHANNEL_CIN1, CDC_CHANNEL_CAPDAC, 0);
-  cdc_set_repeat_measurements(I2C_ADDR_CDC, CDC_ENABLE);
-  cdc_set_repeat_measurements(I2C_ADDR_CDC, CDC_DISABLE);
+  cdc_set_measurement_configuration(I2C_ADDR_CDC, CDC_MEASUREMENT, CDC_CHANNEL_CIN1, CDC_CHANNEL_CAPDAC, 0); // Cost: 1
+  cdc_set_repeat_measurements(I2C_ADDR_CDC, CDC_ENABLE); // Cost: 2 R+W
+  cdc_set_repeat_measurements(I2C_ADDR_CDC, CDC_DISABLE); // Cost: 2 R+W
 
   cdc_set_rate(I2C_ADDR_CDC, CDC_RATE_400SPS);
   
@@ -241,7 +243,7 @@ void setup() {
 
   
   // Reading configurations of all measurements
-  cdc_get_measurement_configuration(I2C_ADDR_CDC, CDC_MEAS1);
+  cdc_get_measurement_configuration(I2C_ADDR_CDC, CDC_MEAS1); // Cost: 1
   cdc_get_measurement_configuration(I2C_ADDR_CDC, CDC_MEAS2);
   cdc_get_measurement_configuration(I2C_ADDR_CDC, CDC_MEAS3);
   cdc_get_measurement_configuration(I2C_ADDR_CDC, CDC_MEAS4);

@@ -205,7 +205,7 @@ float * cap_get_measurement_iteration(float * mem_sensor_array,
       // Reading the corresponding CAPDAC value [NOT IMPLEMENTED]
 //      capdac = mem_get_int(mem_sensor_capdac_array, row, col, row_len, col_len);
       offset = mem_get_int(mem_sensor_offset_array, row, col, row_len, col_len);
-      cdc_set_offset(I2C_ADDR_CDC, CDC_CHANNEL_CIN1, (int16_t) offset);
+      cdc_set_offset(I2C_ADDR_CDC, CDC_CHANNEL_CIN1, (int16_t) offset); // TODO: OPTIMIZE
 
 
 //      cdc_set_measurement_configuration(I2C_ADDR_CDC, CDC_MEAS1, CDC_CHANNEL_CIN1, CDC_CHANNEL_CAPDAC, capdac);
@@ -227,9 +227,9 @@ float * cap_get_measurement_iteration(float * mem_sensor_array,
       // MEASURE
       cdc_set_measurement_enable(I2C_ADDR_CDC, CDC_MEAS1, CDC_ENABLE);
       
-      while(!cdc_get_measurement_completed(I2C_ADDR_CDC,CDC_MEAS1));
+      while(!cdc_get_measurement_completed(I2C_ADDR_CDC,CDC_MEAS1)); // Cost: ???
 
-      value = cdc_get_measurement(I2C_ADDR_CDC, CDC_MEAS1);
+      value = cdc_get_measurement(I2C_ADDR_CDC, CDC_MEAS1); // Cost: 4 read registers
 //      Serial.println(value,HEX);
 //      capacitance = cdc_convert_capacitance(value, capdac);
       capacitance = cdc_convert_capacitance_normalized(value);
