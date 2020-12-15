@@ -42,7 +42,7 @@ uint16_t cdc_read_register(uint8_t addr, uint8_t pointer, uint8_t verbose){
   Wire.beginTransmission(addr);
   Wire.write(pointer);
   status = 0xff;
-  status = Wire.endTransmission(); 
+  status = Wire.endTransmission(1); 
   
   if (status){
     Serial.print("Wire Transmission error: "); Serial.println(status,DEC);
@@ -111,8 +111,8 @@ char cdc_write_register(uint8_t addr, uint8_t pointer, uint16_t data, uint8_t ve
 
 bool cdc_test_id(uint8_t addr){
   // Reads the Manufacturrer ID and Device ID of a FDC1004 device on the i2c bus
-  uint16_t manufacturer_id = cdc_read_register(addr, CDC_MANUFACTURER_ID);
-  uint16_t device_id = cdc_read_register(addr, CDC_DEVICE_ID);
+  uint16_t manufacturer_id = cdc_read_register(addr, CDC_MANUFACTURER_ID, 1);
+  uint16_t device_id = cdc_read_register(addr, CDC_DEVICE_ID, 1);
 
   return (manufacturer_id==CDC_MANUFACTURER_ID_RESPONSE && device_id == CDC_DEVICE_ID_RESPONSE);
   

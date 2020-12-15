@@ -14,9 +14,29 @@
 #include "sercomm.h"
 
 
+//
+//#define led 13
+//#define led2 17
 
-#define led 13
-#define led2 17
+
+#define D1 13
+#define D2 12
+#define D3 27
+#define D5 4
+#define D6 25
+#define D7 26
+
+#define led1 D7
+#define led2 D6
+#define led3 D1
+#define led4 D2
+#define led5 D3
+#define led6 D5
+
+
+#define led led1
+
+#define VERBOSE 0
 
 // Global variables
 
@@ -75,7 +95,7 @@ void *Thread_AcquireSensorData(void *threadid) {
 
 
     if(Serial.available() > 0){
-        digitalWrite(led, HIGH);
+        digitalWrite(led1, HIGH);
   
       
       // The first byte received is the instruction
@@ -176,21 +196,72 @@ void setup() {
 
   Serial.begin(SERIAL_BAUD);
 
+  Serial.println("");
+  Serial.println("");
+  Serial.println("");
   Serial.println("Started");
   randomSeed(analogRead(0));
 
-  
+//  
   // Initializing wire connection
   Wire.begin();
   // set clock to 400 kHz
   Wire.setClock(I2C_CLOCK);
 
+  Serial.println("Started Wire");
 
 
+//
+//
   // Initializing IO
-  pinMode(led,OUTPUT);
+//  pinMode(led,OUTPUT);
+  pinMode(led1,OUTPUT);
   pinMode(led2,OUTPUT);
+  pinMode(led3,OUTPUT);
+  pinMode(led4,OUTPUT);
+  pinMode(led5,OUTPUT);
+  pinMode(led6,OUTPUT);
 
+  digitalWrite(led1,LOW);
+  digitalWrite(led2,LOW);
+  digitalWrite(led3,LOW);
+  digitalWrite(led4,LOW);
+  digitalWrite(led5,LOW);
+  digitalWrite(led6,LOW);
+
+  for (i=0; i<5; i++){
+    #define delayled 10
+      delay(delayled);
+      
+      digitalWrite(led1,HIGH);
+      delay(delayled);
+      digitalWrite(led2,HIGH);
+      delay(delayled);
+      digitalWrite(led3,HIGH);
+      delay(delayled);
+      digitalWrite(led4,HIGH);
+      delay(delayled);
+      digitalWrite(led5,HIGH);
+      delay(delayled);
+      digitalWrite(led6,HIGH);
+      
+      delay(delayled);
+
+      digitalWrite(led1,LOW);
+      delay(delayled);
+      digitalWrite(led2,LOW);
+      delay(delayled);
+      digitalWrite(led3,LOW);
+      delay(delayled);
+      digitalWrite(led4,LOW);
+      delay(delayled);
+      digitalWrite(led5,LOW);
+      delay(delayled);
+      digitalWrite(led6,LOW);
+
+  }
+//
+//
 
   // Checking connectivity and operation of ADG2128
 
@@ -200,19 +271,24 @@ void setup() {
   mux_reset();
   digitalWrite(IO_MUX_RESET_N,HIGH);
 
+  Serial.println("Mux reset");
+
   
   // Checking operation of MUX  
-  if (!mux_test_operation(I2C_ADDR_MUX2)){
+  if (!mux_test_operation(I2C_ADDR_MUX2, VERBOSE)){
     Serial.print("MUX2 not working properly \n");
   }
-  if (!mux_test_operation(I2C_ADDR_MUX1)){
+  if (!mux_test_operation(I2C_ADDR_MUX1, VERBOSE)){
     Serial.print("MUX1 not working properly \n");
   }
-  if (!mux_test_operation(I2C_ADDR_MUX2)){
+  if (!mux_test_operation(I2C_ADDR_MUX2, VERBOSE)){
     Serial.print("MUX2 not working properly \n");
   }
 
   mux_reset();
+
+  Serial.println("Mux confirmed");
+
 
   //  Connect CIN1 on MUX1 Y5 to X0
   mux_write_switch_config(I2C_ADDR_MUX1, mux_get_addr_x(0), mux_get_addr_y(5), MUX_SWITCH_ON, MUX_LDSW_LOAD );
@@ -221,25 +297,37 @@ void setup() {
   mux_write_switch_config(I2C_ADDR_MUX1, mux_get_addr_x(0), mux_get_addr_y(4), MUX_SWITCH_OFF, MUX_LDSW_LOAD );
 //  mux_read_config_matrix(I2C_ADDR_MUX1);
 
+
+  Serial.println("Mux22 confirmed");
+
+
   // Resetting FDC1004
 
   cdc_reset_device(I2C_ADDR_CDC); 
   // Cost: 2 (R+W)
+
+  Serial.println("cdc reset confirmed");
+
 
   // Checking connectivity and operation of FDC1004
   if (!cdc_test_id(I2C_ADDR_CDC)){
     // Cost: 2
     Serial.print("CDC not working properly \n");
   }
+  Serial.println("cdc test ");
 
  #define CDC_MEASUREMENT CDC_MEAS1
   cdc_set_measurement_configuration(I2C_ADDR_CDC, CDC_MEASUREMENT, CDC_CHANNEL_CIN1, CDC_CHANNEL_CAPDAC, 0); // Cost: 1
   cdc_set_repeat_measurements(I2C_ADDR_CDC, CDC_ENABLE); // Cost: 2 R+W
   cdc_set_repeat_measurements(I2C_ADDR_CDC, CDC_DISABLE); // Cost: 2 R+W
 
+
+  Serial.println("cdc repeat measurement");
+
   cdc_set_rate(I2C_ADDR_CDC, CDC_RATE_400SPS);
   
   cdc_set_measurement_enable(I2C_ADDR_CDC, CDC_MEASUREMENT, CDC_ENABLE);
+  Serial.println("Mux333confirmed");
 
   
   // Reading configurations of all measurements
@@ -248,10 +336,12 @@ void setup() {
   cdc_get_measurement_configuration(I2C_ADDR_CDC, CDC_MEAS3);
   cdc_get_measurement_configuration(I2C_ADDR_CDC, CDC_MEAS4);
 
+  Serial.println("before cap switch all");
 
 //  cdc_print_configuration(I2C_ADDR_CDC);
 
   cap_switch_all_rows_signal(CAP_ROW_SHLD1);
+  Serial.println("cap switch all");
 
 //
 //  
@@ -259,7 +349,8 @@ void setup() {
   for (i=0; i<MEM_FIFO_SIZE; i++){
     mem_sensor_fifo[i] = mem_init_float(row_len, col_len);
   }
-  
+  Serial.println("CDC22");
+
 //  mem_sensor_array = mem_init_float(row_len, col_len);
 
   mem_sensor_array = mem_sensor_fifo[mem_sensor_fifo_index];
@@ -313,14 +404,20 @@ void loop() {
 
   Order order;
 
+//  return;
+
 
 //  Serial.println("running");
 
   if (flag_acq_calibrate==1){
+
+    digitalWrite(led3, HIGH);
+
     cap_switch_all_rows_signal(CAP_ROW_SHLD1);
     cap_switch_all_columns_signal(CAP_COL_SHLD1); 
     cap_calibrate_sensors(mem_sensor_fifo[mem_sensor_fifo_index], mem_sensor_capdac_array, mem_sensor_offset_array, row_len, col_len);
     flag_acq_calibrate = 0;
+    digitalWrite(led3, LOW);
   }
 
 // flag_acq_running=1;
@@ -328,166 +425,18 @@ void loop() {
   
     digitalWrite(led2, HIGH);
     cap_get_measurement_iteration(mem_sensor_fifo[mem_sensor_fifo_index], mem_sensor_capdac_array, mem_sensor_offset_array, row_len, col_len);
-    digitalWrite(led2, LOW);
     flag_acq_done = 1;
 
     mem_sensor_fifo_done_index = mem_sensor_fifo_index ;
     mem_sensor_array = mem_sensor_fifo[mem_sensor_fifo_index];
     mem_sensor_fifo_index = mem_fifo_next_index(mem_sensor_fifo_index);
 //    Serial.println(mem_sensor_fifo_index);
+    digitalWrite(led2, LOW);
+
     
 
   }
-
 //
-//  digitalWrite(led2, HIGH);
-//  cap_get_measurement_iteration(mem_sensor_array, mem_sensor_capdac_array, mem_sensor_offset_array, row_len, col_len);
-//  digitalWrite(led2, LOW);
-
-
-
-
-  // Verifies if there is a message on the serial port
-  
-//  
-//  if(Serial.available() > 0){
-//    
-//    
-//    // The first byte received is the instruction
-//    Order order_received = read_order();
-////    Serial.println(order_received);
-//
-//    switch(order_received){
-//      case START_ACQ:
-//        Serial.println("ACQ Start");
-//        
-//        break;
-//      case STOP_ACQ:
-//        Serial.println("ACQ Stop");
-//        
-//        break;
-//
-//      case READ_ACQ:
-////        Serial.println("READ Acq");
-////        digitalWrite(led2, HIGH);
-////        cap_get_measurement_iteration(mem_sensor_array, mem_sensor_capdac_array, mem_sensor_offset_array, row_len, col_len);
-////        cap_send_sensor_array(mem_sensor_array, row_len, col_len);
-//        cap_print_sensor_array(mem_sensor_array, row_len, col_len);
-////        digitalWrite(led2, LOW);
-//        break;
-//      case READ_ACQ_BIN:
-////        Serial.println("READ Acq");
-////        digitalWrite(led2, HIGH);
-////        cap_get_measurement_iteration(mem_sensor_array, mem_sensor_capdac_array, mem_sensor_offset_array, row_len, col_len);
-//        cap_send_sensor_array(mem_sensor_array, row_len, col_len);
-////        cap_print_sensor_array(mem_sensor_array, row_len, col_len);
-////        digitalWrite(led2, LOW);
-//        break;
-//
-//      case CAL_SENSOR:
-////        Serial.println("CAL Sensor");
-//        //  Serial.println("Setting all rows and columns to shield");
-//        cap_switch_all_rows_signal(CAP_ROW_SHLD1);
-//        cap_switch_all_columns_signal(CAP_COL_SHLD1);
-//
-//        cap_calibrate_sensors(mem_sensor_array, mem_sensor_capdac_array, mem_sensor_offset_array, row_len, col_len);
-//
-//        break;
-//      default:
-//        Serial.println("Unrecognized command");
-//        
-//        break;
-//
-//    }
-//  }
-
-
-
-//  digitalWrite(led,HIGH);
-  
-//  cdc_set_measurement_configuration(I2C_ADDR_CDC, CDC_MEAS1, CDC_CHANNEL_CIN1, CDC_CHANNEL_CAPDAC, capdac);
-
-
-  // Configure the measurements
-//  cdc_set_measurement_configuration(I2C_ADDR_CDC, CDC_MEAS1, CDC_CHANNEL_CIN1, CDC_CHANNEL_CAPDAC, capdac);
-
-//  digitalWrite(led2, HIGH);
-////  cap_get_measurement_iteration(mem_sensor_array, mem_sensor_capdac_array, mem_sensor_offset_array, row_len, col_len);
-////  cap_send_sensor_array(mem_sensor_array, row_len, col_len);
-//  digitalWrite(led2, LOW);
-
-
-
-  // Clear the memory 0    
-
-
-//
-//  cap_calibrate_sensors(mem_sensor_array, mem_sensor_capdac_array, mem_sensor_offset_array, row_len, col_len);
-//
-//  Serial.println("-capdac-");
-//  mem_print_int(mem_sensor_capdac_array, row_len, col_len);
-//  Serial.println("-offset-");
-//  mem_print_int(mem_sensor_offset_array, row_len, col_len);
-//  Serial.println("-sensor of cal-");
-//  mem_print_float(mem_sensor_array, row_len, col_len);
-//  cap_get_measurement_iteration(mem_sensor_array, mem_sensor_capdac_array, mem_sensor_offset_array, row_len, col_len);
-//  Serial.println("-sensor-");
-//  mem_print_float(mem_sensor_array, row_len, col_len);
-//  cap_get_measurement_iteration(mem_sensor_array, mem_sensor_capdac_array, mem_sensor_offset_array, row_len, col_len);
-//  
-//  
-//  Serial.println("-sensor-");
-//  mem_print_float(mem_sensor_array, row_len, col_len);
-//
-//    mem_clear_int(mem_sensor_offset_array, row_len, col_len, 0);
-
-//  Serial.println("-sensor-");
-//  mem_print_float(mem_sensor_array, row_len, col_len);
-
-
-
-//  for (row=0; row<row_len; row++){
-//    for (col=0; col<col_len; col++){
-//      capacitance = cap_get_measurement_single(row, col, capdac);
-//      mem_store_float(mem_sensor_array, row, col, row_len, col_len, capacitance);
-//    }
-//
-//  }
-
-//
-//  for (capdac=0; capdac<32; capdac++){
-//    for (row=0; row<row_len; row++){
-//      for (col=0; col<col_len; col++){
-//        capacitance = cap_get_measurement_single(row, col, capdac);
-//  
-//          mem_store_float(mem_sensor_array, row, col, row_len, col_len, capacitance);
-//      }
-//  //    Serial.println();
-//    }
-//    
-//    Serial.println("-sensor-");
-//    Serial.println(capdac);
-//    mem_print_float(mem_sensor_array, row_len, col_len);
-//  }
-
-  
-
-//  delay(500);
-//  Serial.println("-capdac-");
-//  mem_print_int(mem_sensor_capdac_array, row_len, col_len);
-//  Serial.println("-offset-");
-//  mem_print_int(mem_sensor_offset_array, row_len, col_len);
-//  Serial.println("-sensor-");
-//  mem_print_float(mem_sensor_array, row_len, col_len);
-
-
-//  digitalWrite(led,LOW);
-
-  
-//
-//
-//  cap_set_sensor_measurement_single(5,5);
-//  cap_print_connections();
 
   
 
