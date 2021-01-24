@@ -45,7 +45,11 @@ uint16_t cdc_read_register(uint8_t addr, uint8_t pointer, uint8_t verbose){
   status = Wire.endTransmission(1); 
   
   if (status){
+    Serial.print("cdc_read_register - "); 
+    Serial.print(addr,BIN); Serial.print("/");
+    Serial.print(pointer,BIN); Serial.print(" - ");
     Serial.print("Wire Transmission error: "); Serial.println(status,DEC);
+    return -1;
   }
   
 

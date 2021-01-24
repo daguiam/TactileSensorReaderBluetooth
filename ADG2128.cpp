@@ -56,6 +56,11 @@ char mux_write_switch_config(uint8_t addr, uint8_t addr_x, uint8_t addr_y, uint8
   status = Wire.endTransmission(); 
   
   if (status){
+    Serial.print("mux_write_switch_config - ");
+    Serial.print(addr,BIN); Serial.print("/");
+    Serial.print(addr_x,BIN); Serial.print("/");
+    Serial.print(addr_y,BIN); Serial.print("/");
+    Serial.print(data,BIN); Serial.print(" - ");
     Serial.print("Wire Transmission error: "); Serial.println(status,DEC);
   }
   return status;
@@ -73,7 +78,12 @@ char mux_read_config(uint8_t addr, uint8_t read_addr_X, uint8_t verbose){
 
   status = Wire.endTransmission(); 
   if (status){
+    Serial.print("mux_read_config - ");
+
+    Serial.print(addr,BIN); Serial.print("/");
+    Serial.print(read_addr_X,BIN); Serial.print(" - ");
     Serial.print("Wire Transmission error: "); Serial.println(status,DEC);
+    return status;
   }
   if (verbose){
     Serial.print("status of transmission: ");
@@ -136,6 +146,9 @@ bool mux_test_operation(uint8_t addr, bool verbose){
       random_bit = random_value>>i & 0x1;
       
       status = mux_write_switch_config(addr, mux_get_addr_x(j), mux_get_addr_y(i), random_bit, MUX_LDSW_LOAD );
+      if (status){
+        return 0;
+      }
     }
     status = mux_read_config(addr, rb_addr_array[j]);
     

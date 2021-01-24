@@ -131,7 +131,10 @@ void *Thread_AcquireSensorData(void *threadid) {
           break;
   
         case READ_ACQ:
-          if (!flag_acq_done){
+          if (!flag_acq_running){
+            Serial.print((char)ERROR);
+            Serial.println("ACQ Not Started");
+          }else if (!flag_acq_done){
             Serial.print((char)ERROR);
             Serial.println("ACQ Not Done");
           }else{
@@ -163,6 +166,17 @@ void *Thread_AcquireSensorData(void *threadid) {
           
           break;
 
+        case HELP:
+          Serial.println((char)HELP);
+          Serial.println("\'a\' - Start Acquisition");
+          Serial.println("\'s\' - Stop Acquisition");
+          Serial.println("\'r\' - Read data text");
+          Serial.println("\'b\' - Read data binary");
+          Serial.println("\'d\' - Return \'T\' or \'F\' if acquisition is done");
+          Serial.println("\'c\' - Run calibration");
+          
+          break;
+          
         case EOL:
           //ignore
           break;
@@ -188,6 +202,7 @@ void setup() {
   pthread_t threads[4];
   int returnValue;
   int i;
+  int status;
   // Serial for debugging connection
 //    Serial.begin(9600);
 
@@ -277,12 +292,16 @@ void setup() {
   // Checking operation of MUX  
   if (!mux_test_operation(I2C_ADDR_MUX2, VERBOSE)){
     Serial.print("MUX2 not working properly \n");
+    digitalWrite(led5,HIGH);
+
   }
   if (!mux_test_operation(I2C_ADDR_MUX1, VERBOSE)){
     Serial.print("MUX1 not working properly \n");
+    digitalWrite(led4,HIGH);
   }
   if (!mux_test_operation(I2C_ADDR_MUX2, VERBOSE)){
     Serial.print("MUX2 not working properly \n");
+    digitalWrite(led5,HIGH);
   }
 
   mux_reset();
@@ -291,12 +310,18 @@ void setup() {
 
 
   //  Connect CIN1 on MUX1 Y5 to X0
-  mux_write_switch_config(I2C_ADDR_MUX1, mux_get_addr_x(0), mux_get_addr_y(5), MUX_SWITCH_ON, MUX_LDSW_LOAD );
+  status = mux_write_switch_config(I2C_ADDR_MUX1, mux_get_addr_x(0), mux_get_addr_y(5), MUX_SWITCH_ON, MUX_LDSW_LOAD );
 
+  if (status){
+    Serial.println("Mux not switched");
+  }
   // Shortcircuit Y5 to Y4?
-  mux_write_switch_config(I2C_ADDR_MUX1, mux_get_addr_x(0), mux_get_addr_y(4), MUX_SWITCH_OFF, MUX_LDSW_LOAD );
+  status = mux_write_switch_config(I2C_ADDR_MUX1, mux_get_addr_x(0), mux_get_addr_y(4), MUX_SWITCH_OFF, MUX_LDSW_LOAD );
 //  mux_read_config_matrix(I2C_ADDR_MUX1);
 
+  if (status){
+    Serial.println("Mux not switched");
+  }
 
   Serial.println("Mux22 confirmed");
 
@@ -361,12 +386,13 @@ void setup() {
 
 
 
-//  Serial.println("Clearing cap rows and columns");
+  Serial.println("Clearing cap rows and columns");
   cap_switch_clear_all_rows();
   cap_switch_clear_all_columns();
-//  Serial.println("Setting all rows and columns to shield");
+  Serial.println("Setting all rows and columns to shield");
   cap_switch_all_rows_signal(CAP_ROW_SHLD1);
   cap_switch_all_columns_signal(CAP_COL_SHLD1);
+  Serial.println("Calibrate sensors initialize");
 
   cap_calibrate_sensors(mem_sensor_array, mem_sensor_capdac_array, mem_sensor_offset_array, row_len, col_len);
 
