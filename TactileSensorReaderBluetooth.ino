@@ -100,7 +100,7 @@ void *Thread_AcquireSensorData(void *threadid) {
       
       // The first byte received is the instruction
       Order order_received = read_order();
-  //    Serial.println(order_received);
+//      Serial.print("Order: ");Serial.println(order_received);
   
       switch(order_received){
         case START_ACQ:
@@ -108,7 +108,9 @@ void *Thread_AcquireSensorData(void *threadid) {
           Serial.println("ACQ Start");
           flag_acq_running = 1;
           flag_acq_done = 0;
-          
+
+          digitalWrite(led6, HIGH);
+
           break;
           
         case STOP_ACQ:
