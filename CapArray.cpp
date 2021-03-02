@@ -191,8 +191,11 @@ float * cap_get_measurement_iteration(float * mem_sensor_array,
   mem_clear_float(mem_sensor_array, row_len, col_len);
 
   // cdc_set_measurement_configuration(I2C_ADDR_CDC, CDC_MEAS1, CDC_CHANNEL_CIN1, CDC_CHANNEL_CAPDAC, capdac);
-  cap_switch_all_rows_signal(CAP_ROW_SHLD1);
-  cap_switch_all_columns_signal(CAP_COL_SHLD1);
+
+
+  // We assume all rows and columns are already at shield1
+  // cap_switch_all_rows_signal(CAP_ROW_SHLD1);
+  // cap_switch_all_columns_signal(CAP_COL_SHLD1);
   
 
   // capdac value is the same for all capacitors
