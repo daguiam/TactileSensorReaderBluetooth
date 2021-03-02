@@ -171,12 +171,12 @@ if __name__ == "__main__":
                         time_delta = current_time-last_time
 
                         last_time = current_time
-                        print(time_delta)
+                        print("T: %0.2fs\t fps: %0.2f"%(time_delta, 1/time_delta))
                         ser.flushInput()
                 # ser.flushInput()
                 # ser.flushOutput()
 
-            time.sleep(0.01)
+            time.sleep(0.001)
             # print(ord(command))
             # ser.write(command)
             # print(command)

@@ -5,6 +5,7 @@
 //void write_text(char * text){
 //  Serial.write(text);
 //}
+#include "parameters.h"
 
 
 
@@ -48,6 +49,7 @@ char mux_write_switch_config(uint8_t addr, uint8_t addr_x, uint8_t addr_y, uint8
   package.addr_y = addr_y;
   package.data = data;
   package.ldsw = ldsw;
+  Wire.setClock(I2C_CLOCK_MUX);
 
   Wire.beginTransmission(addr);
   Wire.write(package_char[1]);
@@ -70,6 +72,7 @@ char mux_read_config(uint8_t addr, uint8_t read_addr_X, uint8_t verbose){
 //  verbose = 0;
   char status = 0xaa;
   // Start by writing to MUX register to request the Y lines connected to the expected X data
+  Wire.setClock(I2C_CLOCK_MUX);
   Wire.beginTransmission(addr);
 
   Wire.write(read_addr_X);

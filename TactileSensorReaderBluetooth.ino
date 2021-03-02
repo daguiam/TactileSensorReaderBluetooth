@@ -223,7 +223,7 @@ void setup() {
   // Initializing wire connection
   Wire.begin();
   // set clock to 400 kHz
-  Wire.setClock(I2C_CLOCK);
+  Wire.setClock(I2C_CLOCK_MUX);
 
   Serial.println("Started Wire");
 

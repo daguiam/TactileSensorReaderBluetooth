@@ -148,9 +148,15 @@ float cap_get_measurement_single(uint8_t position_row, uint8_t position_column, 
   // Setting the measurement configuration
   cdc_set_measurement_configuration(I2C_ADDR_CDC, CDC_MEAS1, CDC_CHANNEL_CIN1, CDC_CHANNEL_CAPDAC, capdac);
   cdc_set_measurement_enable(I2C_ADDR_CDC, CDC_MEAS1, CDC_ENABLE);
-
+  int i=0;
   // Wait for complete measurement (around 2.5ms)
-  while(!cdc_get_measurement_completed(I2C_ADDR_CDC,CDC_MEAS1));
+  // Serial.println("Waiting for measuremnet complete");
+  while(!cdc_get_measurement_completed(I2C_ADDR_CDC,CDC_MEAS1)) {
+    i++;
+  };
+  
+
+  Serial.println(i,DEC);
   // reading value
   value = cdc_get_measurement(I2C_ADDR_CDC, CDC_MEAS1);
 
@@ -178,11 +184,13 @@ float * cap_get_measurement_iteration(float * mem_sensor_array,
   
   uint8_t row_array[] = CAP_ROW_ARRAY;
   uint8_t column_array[] = CAP_COLUMN_ARRAY;
-  
+  unsigned long currentMicros;
+  unsigned long lastMicros;
+
   // Initialization
   mem_clear_float(mem_sensor_array, row_len, col_len);
 
-  cdc_set_measurement_configuration(I2C_ADDR_CDC, CDC_MEAS1, CDC_CHANNEL_CIN1, CDC_CHANNEL_CAPDAC, capdac);
+  // cdc_set_measurement_configuration(I2C_ADDR_CDC, CDC_MEAS1, CDC_CHANNEL_CIN1, CDC_CHANNEL_CAPDAC, capdac);
   cap_switch_all_rows_signal(CAP_ROW_SHLD1);
   cap_switch_all_columns_signal(CAP_COL_SHLD1);
   
@@ -190,6 +198,9 @@ float * cap_get_measurement_iteration(float * mem_sensor_array,
   // capdac value is the same for all capacitors
   capdac = mem_get_int(mem_sensor_capdac_array, row, col, row_len, col_len);
   cdc_set_measurement_configuration(I2C_ADDR_CDC, CDC_MEAS1, CDC_CHANNEL_CIN1, CDC_CHANNEL_CAPDAC, capdac);
+
+  lastMicros = micros(); // capture current time
+  // Serial.println(currentMicros,DEC);
 
   // Sets all rows and columns to SHLD1
   for (row=0; row<row_len; row++){
@@ -204,6 +215,9 @@ float * cap_get_measurement_iteration(float * mem_sensor_array,
 
       // Reading the corresponding CAPDAC value [NOT IMPLEMENTED]
 //      capdac = mem_get_int(mem_sensor_capdac_array, row, col, row_len, col_len);
+      
+      
+      // commented out offset; USED IN CALIBRATION
       offset = mem_get_int(mem_sensor_offset_array, row, col, row_len, col_len);
       cdc_set_offset(I2C_ADDR_CDC, CDC_CHANNEL_CIN1, (int16_t) offset); // TODO: OPTIMIZE
 
@@ -227,7 +241,14 @@ float * cap_get_measurement_iteration(float * mem_sensor_array,
       // MEASURE
       cdc_set_measurement_enable(I2C_ADDR_CDC, CDC_MEAS1, CDC_ENABLE);
       
-      while(!cdc_get_measurement_completed(I2C_ADDR_CDC,CDC_MEAS1)); // Cost: ???
+      int i=0;
+        // Wait for complete measurement (around 2.5ms)
+        // Serial.println("Waiting for measuremnet complete");
+        while(!cdc_get_measurement_completed(I2C_ADDR_CDC,CDC_MEAS1)) {
+          i++;
+        };
+        // Serial.println(i,DEC);
+
 
       value = cdc_get_measurement(I2C_ADDR_CDC, CDC_MEAS1); // Cost: 4 read registers
 //      Serial.println(value,HEX);
@@ -256,7 +277,8 @@ float * cap_get_measurement_iteration(float * mem_sensor_array,
       // Sets capacitive sensor connections back to shield
       cap_switch_row_signal(row_array[row], CAP_ROW_SHLD1, MUX_SWITCH_ON, 0);
   }
-  
+    currentMicros = micros(); // capture current time
+  // Serial.print("Micros iteration:");  Serial.println(currentMicros-lastMicros,DEC);
   return mem_sensor_array;
 }
 

@@ -4,7 +4,7 @@
 
 
 #include "FDC1004.h"
-
+#include "parameters.h"
 
 
 union Package_FDC_CONF{
@@ -39,6 +39,7 @@ uint16_t cdc_read_register(uint8_t addr, uint8_t pointer, uint8_t verbose){
   uint16_t ret = 0;
 
   // Sends 2 frame write to set the register pointer to the slave
+  Wire.setClock(I2C_CLOCK_CDC);
   Wire.beginTransmission(addr);
   Wire.write(pointer);
   status = 0xff;
@@ -91,6 +92,7 @@ char cdc_write_register(uint8_t addr, uint8_t pointer, uint16_t data, uint8_t ve
   package.elements.data = data;
   package.elements.pointer = pointer;
 
+  Wire.setClock(I2C_CLOCK_CDC);
 
   Wire.beginTransmission(addr);
   Wire.write(package.bytes[2]);
@@ -349,9 +351,9 @@ int32_t cdc_get_measurement(uint8_t addr, uint8_t measurement){
   }
   // TODO: VERIFY I2C AUTO-INCREMENT check page 16 FDC1004 datasheet. To read MSB then LSB.
   // Eliminate aux read, why is this here???
-  aux = cdc_read_register(addr, msb_register); // TODO: OPTIMIZE why aux?? eliminate
+  // aux = cdc_read_register(addr, msb_register); // TODO: OPTIMIZE why aux?? eliminate
   output = cdc_read_register(addr, msb_register) << 16;
-  aux = cdc_read_register(addr, lsb_register);
+  // aux = cdc_read_register(addr, lsb_register);
   output = output | cdc_read_register(addr, lsb_register);
   return output;
 
