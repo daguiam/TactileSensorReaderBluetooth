@@ -4,6 +4,23 @@ import serial
 import time
 
 
+
+TEENSY_ACTUATOR_VID = 5824 #x16C0
+TEENSY_ACTUATOR_PID = 1155 #x0483
+TEENSY_BAUDRATE = 115200#115200
+TEENSY_TIMEOUT = 0.1
+TEENSY_PORT = "COM15"
+ 
+ESP_ACTUATOR_VID = 4292 #x16C0
+ESP_ACTUATOR_PID = 60000 #x0483
+ESP_BAUDRATE = 230400#115200
+ESP_TIMEOUT = 0.1
+ESP_PORT = "COM16"
+
+DEV_NAME = ["Silicon Labs", "Teensy"]
+DEV_BAUD = [ESP_BAUDRATE, TEENSY_BAUDRATE]
+
+
 START_ACQ = b'a'
 STOP_ACQ = b's'
 READ_ACQ = b'r'
@@ -79,7 +96,7 @@ def read_acquisition(port, baud, timeout=1):
 #             print(time.time(), '\t', len(buffer))
 
     
-
+VERBOSE = False
 
 
 def start_acquisition(port, baud, timeout=1):
@@ -112,6 +129,38 @@ def send_check_command(command, port, baud, timeout=0):
         return 1
 
 
+        
+        
+def id_esp(baudrate):
+ # finds COM port where the device is connected (assumes only one device is)
+    #device = "Silicon Labs"
+    #DEV_NAME = ["Silicon Labs","Teensy"]
+    #DEV_BAUD = [115200, 115200]
+    
+    wmi = win32com.client.GetObject("winmgmts:")
+    com = ['COM0','COM0']
+  
+    
+    for port in wmi.InstancesOf("Win32_SerialPort"):
+        ports = port.Name
+        print (ports) #port.DeviceID, port.Name
+        for dev in DEV_NAME:
+            if dev in ports:
+                comPort = port.DeviceID
+                print( comPort, " is ", dev)
+                try:
+                    ser = serial.Serial(comPort, DEV_BAUD[DEV_NAME.index(dev)]) #sets up serial connection (make sure baud rate is correct - matches Teensy)
+                    com[DEV_NAME.index(dev)] = comPort
+                    ser.flushInput()
+                    ser.close()
+                except:
+                    print("ERR: ",comPort," already busy!")
+                    
+    return com
+
+            
+        
+        
 if __name__ == "__main__":
 
 
@@ -137,10 +186,19 @@ if __name__ == "__main__":
         while ser.inWaiting()>0:
             ser.read(1)
 
-        # Start acquisition
+        print("Start acquisition")
         ser.write(b'c')
+        if ser.in_waiting>0:
+            if VERBOSE:
+                print(ser.readline().decode())#Capture serial output as a decoded string
         ser.write(b's')
+        if ser.in_waiting>0:
+            if VERBOSE:
+                print(ser.readline().decode())#Capture serial output as a decoded string
         ser.write(b'a')
+        if ser.in_waiting>0:
+            if VERBOSE:
+                print(ser.readline().decode())#Capture serial output as a decoded string
 
         last_time = time.time()
         while True:
@@ -165,7 +223,7 @@ if __name__ == "__main__":
                 # print(val)
                 if len(val)> 0:
                     if val[0] == 'r':
-                        print(val)
+                        # print(val)
 
                         current_time = time.time()
                         time_delta = current_time-last_time

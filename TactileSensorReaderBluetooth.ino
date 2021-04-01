@@ -34,9 +34,11 @@
 #define led6 D5
 
 
+
+
 #define led led1
 
-#define VERBOSE 0
+#define VERBOSE 1
 
 // Global variables
 
@@ -205,6 +207,9 @@ void setup() {
   int returnValue;
   int i;
   int status;
+
+
+  int flag_error = 0;
   // Serial for debugging connection
 //    Serial.begin(9600);
 
@@ -220,13 +225,16 @@ void setup() {
   randomSeed(analogRead(0));
 
 //  
+
+  Serial.println("Setup: I2C wire start");
+
   // Initializing wire connection
   Wire.begin();
   // set clock to 400 kHz
   Wire.setClock(I2C_CLOCK_MUX);
 
-  Serial.println("Started Wire");
 
+  Serial.println("Setup: ######## Set LED Outputs ######## ");
 
 //
 //
@@ -279,40 +287,66 @@ void setup() {
   }
 //
 //
+  Serial.println("       LED1 - ");
+  Serial.println("       LED2 - ");
+  Serial.println("       LED3 - ");
+  Serial.println("       LED4 - MUX1 Not Okay");
+  Serial.println("       LED5 - MUX2 Not Okay");
+  Serial.println("       LED6 - ");
+
+#define led_mux1 led4
+#define led_mux2 led5
+
 
   // Checking connectivity and operation of ADG2128
+  Serial.println("Setup: ######## MUX setup ######## ");
 
   // Initializing ADG2128 MUX
   pinMode(IO_MUX_RESET_N, OUTPUT);
 
+  Serial.println("Setup: MUX hard reset");
+
   mux_reset();
   digitalWrite(IO_MUX_RESET_N,HIGH);
 
-  Serial.println("Mux reset");
+//  Serial.println("Setup: MUX hard reset complete");
 
   
-  // Checking operation of MUX  
-  if (!mux_test_operation(I2C_ADDR_MUX2, VERBOSE)){
-    Serial.print("MUX2 not working properly \n");
-    digitalWrite(led5,HIGH);
+  digitalWrite(led_mux1,HIGH);
+  Serial.println("Setup: Testing MUX1 Operation");
 
-  }
   if (!mux_test_operation(I2C_ADDR_MUX1, VERBOSE)){
-    Serial.print("MUX1 not working properly \n");
-    digitalWrite(led4,HIGH);
+    Serial.print("ERROR: MUX1 not working properly \n");
+    digitalWrite(led_mux1,HIGH);
+    flag_error++;
+  }else{
+    digitalWrite(led_mux1,LOW);
   }
+  while(flag_error);
+
+
+  Serial.println("Setup: Testing MUX2 Operation");
+  digitalWrite(led_mux2,HIGH);
   if (!mux_test_operation(I2C_ADDR_MUX2, VERBOSE)){
-    Serial.print("MUX2 not working properly \n");
-    digitalWrite(led5,HIGH);
+    Serial.print("ERROR: MUX2 not working properly \n");
+    digitalWrite(led_mux2,HIGH);
+    flag_error++;
+  } else {
+    digitalWrite(led_mux2,LOW);
   }
+  while(flag_error);
+
+  Serial.println("Setup: MUX hard reset");
 
   mux_reset();
+
 
   Serial.println("Mux confirmed");
 
 
   //  Connect CIN1 on MUX1 Y5 to X0
   status = mux_write_switch_config(I2C_ADDR_MUX1, mux_get_addr_x(0), mux_get_addr_y(5), MUX_SWITCH_ON, MUX_LDSW_LOAD );
+  while(flag_error);
 
   if (status){
     Serial.println("Mux not switched");
@@ -402,7 +436,7 @@ void setup() {
 
   returnValue = pthread_create(&threads[0], NULL, Thread_AcquireSensorData, (void *)0);
   
-
+  while(flag_error);
 }
 
 

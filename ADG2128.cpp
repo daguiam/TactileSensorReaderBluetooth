@@ -80,7 +80,7 @@ char mux_read_config(uint8_t addr, uint8_t read_addr_X, uint8_t verbose){
   status = 0xff;
 
   status = Wire.endTransmission(); 
-  if (status){
+  if (verbose && status){
     Serial.print("mux_read_config - ");
 
     Serial.print(addr,BIN); Serial.print("/");
@@ -147,6 +147,16 @@ bool mux_test_operation(uint8_t addr, bool verbose){
     
     for (i=0; i<8; i++){
       random_bit = random_value>>i & 0x1;
+
+      if (verbose){
+        Serial.print("MUX (");
+        Serial.print(addr,BIN);
+        Serial.print(") ");
+        Serial.print(j,DEC);
+        Serial.print(" / ");
+        Serial.println(i,DEC);
+      }
+
       
       status = mux_write_switch_config(addr, mux_get_addr_x(j), mux_get_addr_y(i), random_bit, MUX_LDSW_LOAD );
       if (status){

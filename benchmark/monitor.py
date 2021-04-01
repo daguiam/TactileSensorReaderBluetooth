@@ -3,11 +3,15 @@ from time import sleep
 import sys
 
 
-COM = 'COM8'# /dev/ttyACM0 (Linux)
+COM = 'COM16'# /dev/ttyACM0 (Linux)
 BAUD = 230400
 
-ser = serial.Serial(COM, BAUD,rtscts=True, dsrdtr=True, timeout = .1)
+try:
+    ser = serial.Serial(COM, BAUD,rtscts=True, dsrdtr=True, timeout = .1)
+except ValueError:
+    print(ValueError)
 
+    
 print('Waiting for device');
 sleep(3)
 print(ser.name)

@@ -4,6 +4,7 @@
 #define MUX_PACKAGE_LENGTH 3
 
 #define IO_MUX_RESET_N 16
+//#define IO_MUX_RESET_N 21
 
 
 #define MUX_RW_READ 1
@@ -36,6 +37,7 @@ char mux_get_addr_y(uint8_t y);
 char mux_clear_x(uint8_t addr, uint8_t x );
 char mux_clear_all(uint8_t addr);
 
+bool i2c_error(char code);
 
 char mux_read_config(uint8_t addr, uint8_t read_addr_X, uint8_t verbose=0);
 char mux_write_switch_config(uint8_t addr, uint8_t addr_x, uint8_t addr_y, uint8_t data, uint8_t ldsw);

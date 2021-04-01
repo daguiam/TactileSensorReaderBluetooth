@@ -219,7 +219,8 @@ float * cap_get_measurement_iteration(float * mem_sensor_array,
       // Reading the corresponding CAPDAC value [NOT IMPLEMENTED]
 //      capdac = mem_get_int(mem_sensor_capdac_array, row, col, row_len, col_len);
       
-      
+      digitalWrite(12,HIGH);
+
       // commented out offset; USED IN CALIBRATION
       offset = mem_get_int(mem_sensor_offset_array, row, col, row_len, col_len);
       cdc_set_offset(I2C_ADDR_CDC, CDC_CHANNEL_CIN1, (int16_t) offset); // TODO: OPTIMIZE
@@ -246,11 +247,11 @@ float * cap_get_measurement_iteration(float * mem_sensor_array,
       
       int i=0;
         // Wait for complete measurement (around 2.5ms)
-        // Serial.println("Waiting for measuremnet complete");
+         //Serial.println("Waiting for measuremnet complete");
         while(!cdc_get_measurement_completed(I2C_ADDR_CDC,CDC_MEAS1)) {
           i++;
         };
-        // Serial.println(i,DEC);
+       //  Serial.println(i,DEC);
 
 
       value = cdc_get_measurement(I2C_ADDR_CDC, CDC_MEAS1); // Cost: 4 read registers
@@ -270,7 +271,8 @@ float * cap_get_measurement_iteration(float * mem_sensor_array,
 //      cap_switch_row_signal(row_array[row], CAP_ROW_SHLD1, MUX_SWITCH_ON, 0);
       cap_switch_column_signal(column_array[col], CAP_COL_SHLD1, MUX_SWITCH_ON, 0);
       
-      
+      digitalWrite(12,LOW);
+
 //      cap_switch_row_signal(row_array[row], CAP_ROW_SHLD1);
 //      cap_switch_column_signal(column_array[col], CAP_COL_SHLD1);
     }
